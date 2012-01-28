@@ -1,0 +1,4 @@
+<Modules>
+  <Module Name="Input" Type="InputModule" />
+  <Module Name="Main" Type="Biomorphs" />
+</Modules>
