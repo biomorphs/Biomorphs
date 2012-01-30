@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClCompile Include="..\biomorphs\app.cpp" />
     <ClCompile Include="..\biomorphs\biomorphs.cpp" />
+    <ClCompile Include="..\biomorphs\bloom_render.cpp" />
     <ClCompile Include="..\biomorphs\morph_render.cpp" />
     <ClCompile Include="..\core\config.cpp" />
     <ClCompile Include="..\core\message_pump.cpp" />
@@ -41,11 +42,13 @@
   <ItemGroup>
     <ClInclude Include="..\biomorphs\app.h" />
     <ClInclude Include="..\biomorphs\biomorphs.h" />
+    <ClInclude Include="..\biomorphs\bloom_render.h" />
     <ClInclude Include="..\biomorphs\morph_dna.h" />
     <ClInclude Include="..\biomorphs\morph_render.h" />
     <ClInclude Include="..\core\angles.h" />
     <ClInclude Include="..\core\array.h" />
     <ClInclude Include="..\core\config.h" />
+    <ClInclude Include="..\core\containers.h" />
     <ClInclude Include="..\core\message_pump.h" />
     <ClInclude Include="..\core\minmax.h" />
     <ClInclude Include="..\core\module.h" />
@@ -79,6 +82,7 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="..\data\modules.xml" />
+    <None Include="..\data\shaders\bloom.fx" />
     <None Include="..\data\shaders\simple_blit.fx" />
     <None Include="..\data\shaders\textured_sprite.fx" />
   </ItemGroup>

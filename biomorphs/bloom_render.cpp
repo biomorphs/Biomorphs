@@ -27,16 +27,15 @@ void BloomRender::CombineTargets( BloomRT& fullTarget, BloomRT& tinyBlur )
 	tinyblur.Set( tinyBlur.mTexture );
 
 	// set the bloom constants
-	static float th = 0.08f;
+	static float th = 0.35f;
 	static float m = 3.0f;
 	VectorConstant ps = t.GetVectorConstant("BloomConsts");
 	D3DXVECTOR4 v = D3DXVECTOR4(th,m,0.0f,0.0f);
 	ps.Set(v);
 	ps.Apply();
 
-	float aspect = 1.0f;//(float)m_params.mWidth / (float)m_params.mHeight;
-	float scale = 1.0f;
-	m_spriteRender.Draw( *m_device, D3DXVECTOR2(0.0f,0.0f), D3DXVECTOR2(scale,scale*aspect), "Combine" );
+	const float scale = 1.0f;
+	m_spriteRender.Draw( *m_device, D3DXVECTOR2(0.0f,0.0f), D3DXVECTOR2(scale,scale), "Combine" );
 
 	m_device->ResetShaderState();
 }
@@ -70,10 +69,8 @@ void BloomRender::RenderTargetToTarget( BloomRT& src, BloomRT& dst, const char* 
 	ps.Set( pixelSize );
 	ps.Apply();
 
-	// set the bloom constants
-
+	// render to the target using the sprite renderer
 	m_spriteRender.GetTexture() = src.mTexture;	// use the source rt as a texture
-		 
 	m_spriteRender.RemoveSprites();
 	m_spriteRender.AddSprite( 0, D3DXVECTOR2(-1.0f,-1.0f), D3DXVECTOR2(2.0f,2.0f) );
 

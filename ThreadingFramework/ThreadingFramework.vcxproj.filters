@@ -105,6 +105,9 @@
     <ClCompile Include="..\framework\graphics\spritemap.cpp">
       <Filter>framework\graphics</Filter>
     </ClCompile>
+    <ClCompile Include="..\biomorphs\bloom_render.cpp">
+      <Filter>biomorphs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\core\thread.h">
@@ -206,6 +209,12 @@
     <ClInclude Include="..\framework\graphics\sprite_render.h">
       <Filter>framework\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="..\biomorphs\bloom_render.h">
+      <Filter>biomorphs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\containers.h">
+      <Filter>core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\core\thread.inl">
@@ -221,6 +230,9 @@
       <Filter>data\shaders</Filter>
     </None>
     <None Include="..\data\shaders\textured_sprite.fx">
+      <Filter>data\shaders</Filter>
+    </None>
+    <None Include="..\data\shaders\bloom.fx">
       <Filter>data\shaders</Filter>
     </None>
   </ItemGroup>
