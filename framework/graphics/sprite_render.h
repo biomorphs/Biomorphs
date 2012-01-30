@@ -31,6 +31,11 @@ public:
 	bool Create( Device& d, Parameters& p );
 	void Release( Device& d );
 
+	inline Texture2D& GetTexture()
+	{
+		return m_texture;
+	}
+
 private:
 
 	struct Sprite

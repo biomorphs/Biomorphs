@@ -27,10 +27,7 @@ public:
 		return m_verticesWritten;
 	}
 
-	Texture2D OutputTexture()
-	{
-		return m_texture;
-	}
+	Texture2D CopyOutputTexture(Texture2D& texture);
 
 private:
 	// vertex structure

@@ -14,7 +14,7 @@ BlendState SrcAlphaBlendingAdd
     SrcBlend = SRC_ALPHA;
     DestBlend = INV_SRC_ALPHA;
     BlendOp = ADD;
-    SrcBlendAlpha = ZERO;
+    SrcBlendAlpha = ONE;
     DestBlendAlpha = ZERO;
     BlendOpAlpha = ADD;
     RenderTargetWriteMask[0] = 0x0F;
@@ -61,8 +61,8 @@ PS_INPUT VS( VS_INPUT input )
 //--------------------------------------------------------------------------------------
 float4 PS( PS_INPUT input) : SV_Target
 {
-	float3 sprite = BlitTexture.Sample( sampleTile, input.UV );
-	return float4(sprite, 1.0f);
+	float4 sprite = BlitTexture.Sample( sampleTile, input.UV );
+	return sprite;
 }
 
 
@@ -72,8 +72,8 @@ technique10 Render
     pass P0
     {
 		//SetRasterizerState(rs);	// wireframe!
-		SetDepthStencilState(ds, 0);
 		SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ), 0xFFFFFFFF );
+		SetDepthStencilState(ds, 0);
         SetVertexShader( CompileShader( vs_4_0, VS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, PS() ) );

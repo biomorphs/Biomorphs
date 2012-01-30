@@ -68,11 +68,15 @@ void Biomorphs::_render()
 	m_device.SetViewport( vp );
 
 	// Clear buffers
-	static float clearColour[4] = {0.05f, 0.05f, 0.05f, 0.0f};
+	static float clearColour[4] = {0.05f, 0.25f, 0.45f, 1.0f};
 	m_device.ClearTarget( backBuffer, clearColour );
 	m_device.ClearTarget( depthBuffer, 1.0f, 0 );
 
 	// draw the biomorph as a sprite
+
+	Texture2D& morphTexture = m_morphRenderer.CopyOutputTexture(m_spriteRender.GetTexture());
+	m_spriteRender.GetTexture() = morphTexture;
+		 
 	m_spriteRender.RemoveSprites();
 	m_spriteRender.AddSprite( 0, D3DXVECTOR2(-0.5f,-0.5f), D3DXVECTOR2(1.0f,1.0f) );
 	float scale = 0.6f;
@@ -139,7 +143,7 @@ bool Biomorphs::_initialise()
 	SpriteRender::Parameters sp;
 	sp.mMaxSprites = 1024 * 8;
 	sp.shader = m_spriteShader;
-	sp.texture = m_morphRenderer.OutputTexture();
+	sp.texture = m_morphRenderer.CopyOutputTexture(sp.texture);
 	m_spriteRender.Create( m_device, sp );
 
 	m_screenshotHelper.Initialise( &m_device );
@@ -269,6 +273,8 @@ bool Biomorphs::update( Timer& timer )
 
 bool Biomorphs::shutdown()
 {
+	m_device.Release(m_spriteRender.GetTexture());
+
 	m_device.Release( m_font );
 
 	m_screenshotHelper.Release();
@@ -291,11 +297,6 @@ bool Biomorphs::startup()
 
 	// Reset device shadowing
 	m_shadowDevice.Invalidate();
-
-	// Render to the back buffer / depthStencil
-	Rendertarget& backBuffer = m_device.GetBackBuffer();
-	DepthStencilBuffer& depthStencil = m_device.GetDepthStencilBuffer();
-	m_shadowDevice.SetRenderTargets( backBuffer, depthStencil );
 
 	// Create a font
 	Font::Parameters fontParams;

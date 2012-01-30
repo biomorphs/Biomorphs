@@ -27,13 +27,8 @@ void SpriteRender::Draw( ShadowedDevice& device, D3DXVECTOR2 startPosition, D3DX
 	}
 
 	EffectTechnique t = m_shader.GetTechniqueByName("Render");
-
-	VectorConstant posScale = t.GetVectorConstant("PositionScale");
-	posScale.Set(D3DXVECTOR4(startPosition.x, startPosition.y, scale.x, scale.y));
-	posScale.Apply();
-
 	TextureSampler sampler = t.GetSamplerByName("BlitTexture");
-
+	VectorConstant posScale = t.GetVectorConstant("PositionScale");
 	if( m_texture.IsValid() )
 	{
 		sampler.Set( m_texture );
@@ -42,6 +37,9 @@ void SpriteRender::Draw( ShadowedDevice& device, D3DXVECTOR2 startPosition, D3DX
 	{
 		sampler.Set( m_spritemap->GetTexture() );
 	}
+
+	posScale.Set(D3DXVECTOR4(startPosition.x, startPosition.y, scale.x, scale.y));
+	posScale.Apply();
 
 	device.SetTechnique(t, 0);
 	device.SetInputLayout(m_inputLayout);

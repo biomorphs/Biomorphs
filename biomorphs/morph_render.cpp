@@ -9,6 +9,33 @@ MorphRender::~MorphRender()
 {
 }
 
+Texture2D MorphRender::CopyOutputTexture(Texture2D& texture)
+{
+	Texture2D resultTexture = texture;;
+	if( !resultTexture.IsValid() )
+	{
+		// create a texture the same size as the output texture
+		Texture2D::Parameters tp;
+		tp.access = Texture2D::CpuNoAccess;
+		tp.bindFlags = Texture2D::BindAsShaderResource | Texture2D::BindAsRenderTarget;
+		tp.format = Texture2D::TypeFloat32;
+		tp.height = m_params.mTextureHeight;
+		tp.width = m_params.mTextureWidth;
+		tp.msaaCount = 1;
+		tp.msaaQuality = 0;
+		tp.numMips = 1;
+		resultTexture = m_device->CreateTexture( tp );
+	}
+
+	if( resultTexture.IsValid() )
+	{
+		// render to the texture
+		m_device->CopyTextureToTexture( m_texture, resultTexture );
+	}
+
+	return resultTexture;
+}
+
 int MorphRender::_drawRecursive( MorphDNA& dna, RecursionParams& params, MorphVertex* vertices, unsigned int* indices )
 {
 	if( params.branchDepth <= 0 )
@@ -145,6 +172,7 @@ void MorphRender::EndRendering(D3DXVECTOR4 posScale)
 
 	// reset the shader state (unbinds the render target)
 	m_device->ResetShaderState();
+	m_device->SetRenderTargets( &m_rt, &m_depthStencil );
 
 	// Set the viewport
 	Viewport vp;
@@ -152,8 +180,6 @@ void MorphRender::EndRendering(D3DXVECTOR4 posScale)
 	vp.depthRange = Vector2f(0.0f,1.0f);
 	vp.dimensions = Vector2(m_params.mTextureWidth, m_params.mTextureHeight);
 	m_device->SetViewport( vp );
-
-	m_device->SetRenderTargets( &m_rt, &m_depthStencil );
 
 	// clear all colour to 0
 	static float clearColour[4] = {0.0f, 0.0f, 0.0f, 0.0f};
