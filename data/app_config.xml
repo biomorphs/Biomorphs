@@ -2,8 +2,8 @@
   <!-- App Settings -->
   <Group Name="Window">
     <Element Name="WindowTitle" Type="String" Value="Biomorphs" />
-    <Element Name="Width" Type="Unsigned Int" Value="512" />
-    <Element Name="Height" Type="Unsigned Int" Value="512" />
+    <Element Name="Width" Type="Unsigned Int" Value="1280" />
+    <Element Name="Height" Type="Unsigned Int" Value="720" />
     <Element Name="Bpp" Type="Unsigned Int" Value="32" />
     <Element Name="Fullscreen" Type="Boolean" Value="False" />
     <Element Name="HasConsole" Type="Boolean" Value="True" />

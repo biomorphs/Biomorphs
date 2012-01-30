@@ -82,9 +82,12 @@ bool Device::ClearTarget( const DepthStencilBuffer& rt, float depth, unsigned in
 	return false;
 }
 
-void Device::SetRenderTargets( Rendertarget& colourTarget, DepthStencilBuffer& depthStencilTarget )
+void Device::SetRenderTargets( Rendertarget* colourTarget, DepthStencilBuffer* depthStencilTarget )
 {
-	m_d3dDevice->OMSetRenderTargets(1, &colourTarget.m_rendertarget, depthStencilTarget.m_renderTarget);
+	ID3D10RenderTargetView* c = colourTarget!=NULL ? colourTarget->m_rendertarget : NULL;
+	ID3D10DepthStencilView* d = depthStencilTarget!=NULL ? depthStencilTarget->m_renderTarget : NULL;
+
+	m_d3dDevice->OMSetRenderTargets(1, &c, d);
 }
 
 bool Device::SaveTextureToFile(Texture2D& t, const char* fileName, TextureFileType type)
@@ -143,6 +146,12 @@ void Device::UnlockVB(VertexBuffer& vb)
 void Device::PresentBackbuffer()
 {
 	m_swapChain->Present( 0, 0 );
+}
+
+void Device::ResetShaderState()
+{
+	ID3D10ShaderResourceView *const pSRV[1] = {NULL};
+	m_d3dDevice->PSSetShaderResources( 0, 1, pSRV );
 }
 
 void Device::Flush()
@@ -221,6 +230,7 @@ bool Device::createRenderBuffers(InitParameters& params)
 	depthParams.m_height = params.windowHeight;
 	depthParams.m_msaaQuality = params.msaaQuality;
 	depthParams.m_msaaCount = params.msaaCount;
+	depthParams.m_format = DepthStencilBuffer::TypeDepthStencil32;
 	m_mainDepthStencil = CreateDepthStencil(depthParams);
 
 	return true;
@@ -324,7 +334,7 @@ DepthStencilBuffer Device::CreateDepthStencil( const DepthStencilBuffer::Paramet
 	
 	// Create the surface
 	Texture2D::Parameters surfaceParams;
-	surfaceParams.format = Texture2D::TypeDepthStencil32;
+	surfaceParams.format = (Texture2D::TextureFormat)params.m_format;
 	surfaceParams.width = params.m_width;
 	surfaceParams.height = params.m_height;
 	surfaceParams.msaaCount = params.m_msaaCount;
@@ -336,7 +346,7 @@ DepthStencilBuffer Device::CreateDepthStencil( const DepthStencilBuffer::Paramet
 
 	// Create the depth stencil target
     D3D10_DEPTH_STENCIL_VIEW_DESC descDSV;
-    descDSV.Format = DXGI_FORMAT_D32_FLOAT;
+	descDSV.Format = (DXGI_FORMAT)params.m_format;
     descDSV.ViewDimension = D3D10_DSV_DIMENSION_TEXTURE2D;
     descDSV.Texture2D.MipSlice = 0;
 	ID3D10DepthStencilView* rt = NULL;

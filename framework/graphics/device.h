@@ -38,6 +38,7 @@ public:
 	bool Initialise(InitParameters& params);
 	bool Shutdown();
 	void Flush();	// Clear the device state
+	void ResetShaderState(); // Clear the shader state
 
 	// Backbuffer / Depthstencil access
 	Rendertarget& GetBackBuffer();
@@ -49,7 +50,7 @@ public:
 
 	// Render State
 	void SetViewport( Viewport& vp );
-	void SetRenderTargets( Rendertarget& colourTarget, DepthStencilBuffer& depthStencilTarget );
+	void SetRenderTargets( Rendertarget* colourTarget, DepthStencilBuffer* depthStencilTarget );
 	void SetPrimitiveTopology(PrimitiveTopology t);
 	void SetInputLayout(ShaderInputLayout& l);
 	void SetVertexBuffer(int streamIndex, VertexBuffer& vb);

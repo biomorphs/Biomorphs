@@ -55,7 +55,7 @@ public:
 			m_colourTarget = colourTarget;
 			m_depthStencilBuffer = depthStencilTarget;
 
-			m_device->SetRenderTargets(colourTarget, depthStencilTarget);
+			m_device->SetRenderTargets(&colourTarget, &depthStencilTarget);
 		}
 	}
 

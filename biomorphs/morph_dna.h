@@ -1,0 +1,166 @@
+#ifndef MORPH_DNA_INCLUDED
+#define MORPH_DNA_INCLUDED
+
+#include "core/angles.h"
+
+typedef unsigned long long uint_64;
+
+// biomorph dna structure
+struct MorphDNA
+{
+	MorphDNA()
+		: mFullSequence0(0)
+		, mFullSequence1(0)
+	{
+	}
+	union
+	{
+		struct
+		{
+			unsigned int mBranchDepth : 4;				// 1 to 16 branches (minimum of 1)
+			unsigned int mBranchInitialAngle : 7;		// 0 to 127 quantised to 0 - 180 degrees
+			unsigned int mBranchInitialLength : 6;		// 0 to 63 quantised to 0 - 1
+			unsigned int mBranchLengthModifier : 8;		// 0 to 255 quantised to 0.0 to 2.0
+			unsigned int mBranchAngleModifier : 8;		// 0 to 255 quantised to 0.0 to 2.0
+			unsigned int mBaseColourRed : 5;			// 0 to 31 quantised to 0.0 to 1.0
+			unsigned int mBaseColourGreen : 5;			// 0 to 31 quantised to 0.0 to 1.0
+			unsigned int mBaseColourBlue : 5;			// 0 to 31 quantised to 0.0 to 1.0
+			unsigned int mBranchRedModifier : 8;		// 0 to 255 quantised to 0.0 - 2.0
+			unsigned int mBranchGreenModifier : 8;		// 0 to 255 quantised to 0.0 - 2.0
+			unsigned int mBranchBlueModifier : 8;		// 0 to 255 quantised to 0.0 - 2.0
+		};
+		struct
+		{
+			unsigned int mFullSequenceHigh0;
+			unsigned int mFullSequenceLow0;
+			unsigned int mFullSequenceHigh1;
+			unsigned int mFullSequenceLow1;
+		};
+		struct
+		{
+			uint_64 mFullSequence0; 
+			uint_64 mFullSequence1; 
+		};
+	};
+};
+
+// dna builder helper
+inline MorphDNA MAKEDNA(unsigned int branches, 
+						float initAngle, 
+						float initLength,
+						float lengthMod,
+						float angleMod,
+						D3DXVECTOR3 baseColour,
+						D3DXVECTOR3 colourMod)
+{
+	MorphDNA dna;
+	dna.mBranchDepth = branches;
+	dna.mBranchInitialLength = (unsigned int)(initLength * 63.0f);
+	dna.mBranchLengthModifier = (unsigned int)(lengthMod * 0.5f * 255.0f);
+	dna.mBranchInitialAngle = (unsigned int)((Angles::ToRadians(initAngle) / Angles::PI) * 127.0f);
+	dna.mBranchAngleModifier = (unsigned int)(angleMod * 0.5f * 255.0f);
+
+	dna.mBaseColourRed = (unsigned int)(baseColour.x * 31.0f);
+	dna.mBaseColourGreen = (unsigned int)(baseColour.y * 31.0f);
+	dna.mBaseColourBlue = (unsigned int)(baseColour.z * 31.0f);
+
+	dna.mBranchRedModifier = (unsigned int)(colourMod.x * 0.5f * 255.0f);
+	dna.mBranchGreenModifier = (unsigned int)(colourMod.y * 0.5f * 255.0f);
+	dna.mBranchBlueModifier = (unsigned int)(colourMod.z * 0.5f * 255.0f);
+
+	return dna;
+}
+
+// branch depth (num recursions)
+inline int BASEDEPTH(MorphDNA& dna)
+{
+	return 1 + dna.mBranchDepth;
+}
+
+// branch base angle
+inline float BASEANGLE(MorphDNA& dna)
+{
+	return ((float)(dna.mBranchInitialAngle / 127.0f) * Angles::PI);
+}
+
+// branch base length 
+inline float BASELENGTH(MorphDNA& dna)
+{
+	return (float)(dna.mBranchInitialLength / 63.0f);
+}
+
+// base colour
+inline D3DXVECTOR4 BASECOLOUR(MorphDNA& dna)
+{
+	float red = (float)dna.mBaseColourRed / 31.0f;
+	float green = (float)dna.mBaseColourGreen / 31.0f;
+	float blue = (float)dna.mBaseColourBlue / 31.0f;
+	const float alpha = 1.0f;
+
+	return D3DXVECTOR4( red, green, blue, alpha );
+}
+
+// branch length modifier
+inline float BRANCHLENGTHMOD(MorphDNA& dna) 
+{
+	return (float)(dna.mBranchLengthModifier / 255.0f) * 2.0f;
+}
+
+// branch angle modifier
+inline float BRANCHANGLEMOD(MorphDNA& dna) 
+{
+	return ((float)(dna.mBranchAngleModifier / 255.0f) * 2.0f);
+}
+
+// branch red modifier
+inline float BRANCHREDMOD(MorphDNA& dna) 
+{
+	return ((float)(dna.mBranchRedModifier / 255.0f) * 2.0f);
+}
+
+// branch green modifier
+inline float BRANCHGREENMOD(MorphDNA& dna) 
+{
+	return ((float)(dna.mBranchGreenModifier / 255.0f) * 2.0f);
+}
+
+// branch blue modifier
+inline float BRANCHBLUEMOD(MorphDNA& dna) 
+{
+	return ((float)(dna.mBranchBlueModifier / 255.0f) * 2.0f);
+}
+
+// branch length for a specific branch
+inline float BRANCHLENGTH(MorphDNA& dna, int depth )
+{
+	float mod = pow(BRANCHLENGTHMOD(dna), BASEDEPTH(dna) - depth);
+	return mod * BASELENGTH(dna);
+}
+
+// branch angle for a specific branch 
+inline float BRANCHANGLE(MorphDNA&dna, int depth)	
+{
+	float mod = pow(BRANCHANGLEMOD(dna), BASEDEPTH(dna) - depth);
+	return mod * BASEANGLE(dna);
+}
+
+// branch colour for a specific branch
+inline D3DXVECTOR4 BRANCHCOLOUR(MorphDNA&dna, int depth)	
+{
+	int d = BASEDEPTH(dna) - depth;
+
+	D3DXVECTOR4 baseColour = BASECOLOUR(dna);
+
+	float mod = pow(BRANCHREDMOD(dna), d);
+	float r = mod * baseColour.x;
+
+	mod = pow(BRANCHGREENMOD(dna), d);
+	float g = mod * baseColour.y;
+
+	mod = pow(BRANCHBLUEMOD(dna), d);
+	float b = mod * baseColour.z;
+
+	return D3DXVECTOR4( r, g, b, 1.0f );
+}
+
+#endif

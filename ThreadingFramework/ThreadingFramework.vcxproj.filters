@@ -1,0 +1,227 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="platform_main">
+      <UniqueIdentifier>{bde55503-f5df-4545-b553-31544b069167}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core">
+      <UniqueIdentifier>{1c758e8f-64d1-48e6-a8e6-c9e39c063a36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tinyxml">
+      <UniqueIdentifier>{b3302b99-7bdc-4cce-b646-cd8d88c025a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="data">
+      <UniqueIdentifier>{0407b53a-cf3d-4141-83ca-cdf87b01a60d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework">
+      <UniqueIdentifier>{ec1531ee-5b5c-4b7f-b9b1-4d6ee68ca3c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\graphics">
+      <UniqueIdentifier>{a14b17e0-17b2-452d-8d91-17e5a9ea178f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="biomorphs">
+      <UniqueIdentifier>{d9267ccb-b7e0-47a2-b1be-19b49fe5e837}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="data\shaders">
+      <UniqueIdentifier>{857cdb0c-a122-44ac-b0c4-02e7c0970b58}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\platform_main\main.cpp">
+      <Filter>platform_main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\thread.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\config.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\tinyxml\tinyxml.cpp">
+      <Filter>tinyxml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\tinyxml\tinystr.cpp">
+      <Filter>tinyxml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\tinyxml\xmltest.cpp">
+      <Filter>tinyxml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\tinyxml\tinyxmlparser.cpp">
+      <Filter>tinyxml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\tinyxml\tinyxmlerror.cpp">
+      <Filter>tinyxml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\window.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\message_pump.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\module.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\module_manager.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\timer.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\module_factory.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\named_object_buffer.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\framework\input.cpp">
+      <Filter>framework</Filter>
+    </ClCompile>
+    <ClCompile Include="..\framework\state_update.cpp">
+      <Filter>framework</Filter>
+    </ClCompile>
+    <ClCompile Include="..\framework\graphics\d3d_app.cpp">
+      <Filter>framework\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\framework\graphics\device.cpp">
+      <Filter>framework\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\framework\graphics\device_types.cpp">
+      <Filter>framework\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\biomorphs\biomorphs.cpp">
+      <Filter>biomorphs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\biomorphs\app.cpp">
+      <Filter>biomorphs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\biomorphs\morph_render.cpp">
+      <Filter>biomorphs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\framework\graphics\screenshot_helper.cpp">
+      <Filter>framework\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\framework\graphics\sprite_render.cpp">
+      <Filter>framework\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\framework\graphics\spritemap.cpp">
+      <Filter>framework\graphics</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\core\thread.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\config.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\tinyxml\tinyxml.h">
+      <Filter>tinyxml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\tinyxml\tinystr.h">
+      <Filter>tinyxml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\string_hashing.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\window.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\message_pump.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\module_manager.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\module.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\timer.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\module_factory.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\named_object_buffer.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\framework\input.h">
+      <Filter>framework</Filter>
+    </ClInclude>
+    <ClInclude Include="..\framework\state_update.h">
+      <Filter>framework</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\random.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\vector2.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\array.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\framework\graphics\perf_grab.h">
+      <Filter>framework\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\framework\graphics\shadowed_device.h">
+      <Filter>framework\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\framework\graphics\vertex_descriptor.h">
+      <Filter>framework\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\framework\graphics\d3d_app.h">
+      <Filter>framework\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\framework\graphics\device.h">
+      <Filter>framework\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\framework\graphics\device_types.h">
+      <Filter>framework\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\strings.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\minmax.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\biomorphs\app.h">
+      <Filter>biomorphs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\biomorphs\biomorphs.h">
+      <Filter>biomorphs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\biomorphs\morph_render.h">
+      <Filter>biomorphs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\biomorphs\morph_dna.h">
+      <Filter>biomorphs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\angles.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\framework\graphics\screenshot_helper.h">
+      <Filter>framework\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\framework\graphics\spritemap.h">
+      <Filter>framework\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\framework\graphics\sprite_render.h">
+      <Filter>framework\graphics</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\core\thread.inl">
+      <Filter>core</Filter>
+    </None>
+    <None Include="..\data\app_config.xml">
+      <Filter>data</Filter>
+    </None>
+    <None Include="..\data\modules.xml">
+      <Filter>data</Filter>
+    </None>
+    <None Include="..\data\shaders\simple_blit.fx">
+      <Filter>data\shaders</Filter>
+    </None>
+    <None Include="..\data\shaders\textured_sprite.fx">
+      <Filter>data\shaders</Filter>
+    </None>
+  </ItemGroup>
+</Project>

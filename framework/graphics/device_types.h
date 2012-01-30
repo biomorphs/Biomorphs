@@ -406,7 +406,7 @@ friend class TextureSampler;
 public:
 	enum TextureFormat
 	{
-		TypeFloat32 = DXGI_FORMAT_R32_FLOAT,
+		TypeFloat32 = DXGI_FORMAT_R32G32B32A32_FLOAT,
 		TypeDepthStencil32 = DXGI_FORMAT_D32_FLOAT,
 		TypeInt8UnNormalised = DXGI_FORMAT_R8G8B8A8_UNORM
 	};
@@ -508,13 +508,18 @@ class DepthStencilBuffer
 {
 friend class Device;
 public:
+	enum Format
+	{
+		TypeDepthStencil32 = Texture2D::TypeDepthStencil32
+	};
+
 	struct Parameters
 	{
 		int m_width;
 		int m_height;
 		int m_msaaQuality;
 		int m_msaaCount;
-		int m_format;
+		Format m_format;
 	};
 
 	DepthStencilBuffer()

@@ -1,0 +1,163 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\biomorphs\app.cpp" />
+    <ClCompile Include="..\biomorphs\biomorphs.cpp" />
+    <ClCompile Include="..\biomorphs\morph_render.cpp" />
+    <ClCompile Include="..\core\config.cpp" />
+    <ClCompile Include="..\core\message_pump.cpp" />
+    <ClCompile Include="..\core\module.cpp" />
+    <ClCompile Include="..\core\module_factory.cpp" />
+    <ClCompile Include="..\core\module_manager.cpp" />
+    <ClCompile Include="..\core\named_object_buffer.cpp" />
+    <ClCompile Include="..\core\thread.cpp" />
+    <ClCompile Include="..\core\timer.cpp" />
+    <ClCompile Include="..\core\window.cpp" />
+    <ClCompile Include="..\external\tinyxml\tinystr.cpp" />
+    <ClCompile Include="..\external\tinyxml\tinyxml.cpp" />
+    <ClCompile Include="..\external\tinyxml\tinyxmlerror.cpp" />
+    <ClCompile Include="..\external\tinyxml\tinyxmlparser.cpp" />
+    <ClCompile Include="..\external\tinyxml\xmltest.cpp" />
+    <ClCompile Include="..\framework\graphics\d3d_app.cpp" />
+    <ClCompile Include="..\framework\graphics\device.cpp" />
+    <ClCompile Include="..\framework\graphics\device_types.cpp" />
+    <ClCompile Include="..\framework\graphics\screenshot_helper.cpp" />
+    <ClCompile Include="..\framework\graphics\spritemap.cpp" />
+    <ClCompile Include="..\framework\graphics\sprite_render.cpp" />
+    <ClCompile Include="..\framework\input.cpp" />
+    <ClCompile Include="..\framework\state_update.cpp" />
+    <ClCompile Include="..\platform_main\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\biomorphs\app.h" />
+    <ClInclude Include="..\biomorphs\biomorphs.h" />
+    <ClInclude Include="..\biomorphs\morph_dna.h" />
+    <ClInclude Include="..\biomorphs\morph_render.h" />
+    <ClInclude Include="..\core\angles.h" />
+    <ClInclude Include="..\core\array.h" />
+    <ClInclude Include="..\core\config.h" />
+    <ClInclude Include="..\core\message_pump.h" />
+    <ClInclude Include="..\core\minmax.h" />
+    <ClInclude Include="..\core\module.h" />
+    <ClInclude Include="..\core\module_factory.h" />
+    <ClInclude Include="..\core\module_manager.h" />
+    <ClInclude Include="..\core\named_object_buffer.h" />
+    <ClInclude Include="..\core\random.h" />
+    <ClInclude Include="..\core\strings.h" />
+    <ClInclude Include="..\core\string_hashing.h" />
+    <ClInclude Include="..\core\thread.h" />
+    <ClInclude Include="..\core\timer.h" />
+    <ClInclude Include="..\core\vector2.h" />
+    <ClInclude Include="..\core\window.h" />
+    <ClInclude Include="..\external\tinyxml\tinystr.h" />
+    <ClInclude Include="..\external\tinyxml\tinyxml.h" />
+    <ClInclude Include="..\framework\graphics\d3d_app.h" />
+    <ClInclude Include="..\framework\graphics\device.h" />
+    <ClInclude Include="..\framework\graphics\device_types.h" />
+    <ClInclude Include="..\framework\graphics\perf_grab.h" />
+    <ClInclude Include="..\framework\graphics\screenshot_helper.h" />
+    <ClInclude Include="..\framework\graphics\shadowed_device.h" />
+    <ClInclude Include="..\framework\graphics\spritemap.h" />
+    <ClInclude Include="..\framework\graphics\sprite_render.h" />
+    <ClInclude Include="..\framework\graphics\vertex_descriptor.h" />
+    <ClInclude Include="..\framework\input.h" />
+    <ClInclude Include="..\framework\state_update.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\core\thread.inl" />
+    <None Include="..\data\app_config.xml">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="..\data\modules.xml" />
+    <None Include="..\data\shaders\simple_blit.fx" />
+    <None Include="..\data\shaders\textured_sprite.fx" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{A4CA8127-E2EC-40AF-A7BB-98C28F635AB6}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>ThreadingFramework</RootNamespace>
+    <ProjectName>D3d</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <ExecutablePath>$(DXSDK_DIR)Utilities\bin\x86;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>$(DXSDK_DIR)Include;$(IncludePath); C:\Program Files\Microsoft SDKs\Windows\v7.0A\Include\gl;$(SolutionDir)\external\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(DXSDK_DIR)Lib\x86;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <ExecutablePath>$(DXSDK_DIR)Utilities\bin\x86;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>$(DXSDK_DIR)Include;$(IncludePath); C:\Program Files\Microsoft SDKs\Windows\v7.0A\Include\gl;$(SolutionDir)\external\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(DXSDK_DIR)Lib\x86;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>Sync</ExceptionHandling>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>d3d10.lib;d3dx10d.lib;d3dx9d.lib;dxerr.lib;dxguid.lib;winmm.lib;comctl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)\external\glew\include;$(SolutionDir)\external\sdl_image\include;$(SolutionDir)\external\sprig\include;$(SolutionDir)\external\sdl\include;$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>d3d10.lib;d3dx10d.lib;d3dx9d.lib;dxerr.lib;dxguid.lib;winmm.lib;comctl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
