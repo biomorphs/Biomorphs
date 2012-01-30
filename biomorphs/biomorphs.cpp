@@ -5,7 +5,6 @@
 
 Biomorphs::Biomorphs( void* userData )
 	: m_appConfig(*((D3DAppConfig*)userData))
-	, m_shadowDevice(&m_device)
 	, m_doScreenshots(false)
 {
 }
@@ -32,8 +31,8 @@ void Biomorphs::_resetDNA()
 							Random::getFloat( 0.6f, 1.4f ),
 							Random::getFloat( 0.6f, 1.4f ) );
 
-	m_testDNA = MAKEDNA(	Random::getInt(2, 8), 
-							Random::getFloat(30.0f,80.0f), 
+	m_testDNA = MAKEDNA(	Random::getInt(4, 8), 
+							Random::getFloat(10.0f,120.0f), 
 							Random::getFloat(0.8f,1.0f), 
 							Random::getFloat( 0.8f, 1.2f ), 
 							Random::getFloat( 0.7f, 1.3f ),
@@ -45,14 +44,11 @@ void Biomorphs::_resetDNA()
 
 void Biomorphs::_render()
 {
-	m_shadowDevice.StartFrame();
-
 	// render the current generation to a texture
-	D3DXVECTOR2 origin( 0.0f, 0.0f );
 	float aspect = (float)m_appConfig.m_windowWidth / (float)m_appConfig.m_windowHeight;
 	D3DXVECTOR4 posScale( 0.0f, 0.0f, 0.1f, 0.1f );
 	m_morphRenderer.StartRendering();
-	m_morphRenderer.DrawBiomorph( origin, m_testDNA );
+	m_morphRenderer.DrawBiomorph( m_testDNA );
 	m_morphRenderer.EndRendering( posScale );
 
 	// switch back to rendering to back buffer
@@ -68,7 +64,7 @@ void Biomorphs::_render()
 	m_device.SetViewport( vp );
 
 	// Clear buffers
-	static float clearColour[4] = {0.05f, 0.25f, 0.45f, 1.0f};
+	static float clearColour[4] = {0.0f, 0.1f, 0.25f, 1.0f};
 	m_device.ClearTarget( backBuffer, clearColour );
 	m_device.ClearTarget( depthBuffer, 1.0f, 0 );
 
@@ -78,9 +74,12 @@ void Biomorphs::_render()
 	m_spriteRender.GetTexture() = morphTexture;
 		 
 	m_spriteRender.RemoveSprites();
-	m_spriteRender.AddSprite( 0, D3DXVECTOR2(-0.5f,-0.5f), D3DXVECTOR2(1.0f,1.0f) );
+	m_spriteRender.AddSprite( 0, D3DXVECTOR2(-0.7f,-0.7f), D3DXVECTOR2(1.4f,1.4f) );
 	float scale = 0.6f;
-	m_spriteRender.Draw( m_shadowDevice, D3DXVECTOR2(0.0f,0.0f), D3DXVECTOR2(scale,scale*aspect) );
+	m_spriteRender.Draw( m_device, D3DXVECTOR2(0.0f,0.0f), D3DXVECTOR2(scale,scale*aspect), "Render" );
+
+	//now render the bloom from the backbuffer
+	m_bloom.Render();
 
 	char textOut[256] = {'\0'};
 	Font::DrawParameters dp;
@@ -101,7 +100,6 @@ void Biomorphs::_render()
 	sprintf_s(textOut, "%d Vertices", m_morphRenderer.GetVertexCount());
 	m_device.DrawText( textOut, m_font, dp, textPos );
 
-	m_shadowDevice.EndFrame();
 	m_device.PresentBackbuffer();
 
 	// build a file name from the index + DNA identifier
@@ -147,6 +145,11 @@ bool Biomorphs::_initialise()
 	m_spriteRender.Create( m_device, sp );
 
 	m_screenshotHelper.Initialise( &m_device );
+
+	BloomRender::Parameters bp;
+	bp.mWidth = m_appConfig.m_windowWidth;
+	bp.mHeight = m_appConfig.m_windowHeight;
+	m_bloom.Create( &m_device, bp );
 
 	_resetDNA();
 
@@ -273,6 +276,8 @@ bool Biomorphs::update( Timer& timer )
 
 bool Biomorphs::shutdown()
 {
+	m_bloom.Release();
+
 	m_device.Release(m_spriteRender.GetTexture());
 
 	m_device.Release( m_font );
@@ -294,9 +299,6 @@ bool Biomorphs::startup()
 {
 	if( !initDevice() )
 		return false;
-
-	// Reset device shadowing
-	m_shadowDevice.Invalidate();
 
 	// Create a font
 	Font::Parameters fontParams;

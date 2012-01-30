@@ -53,6 +53,7 @@ PS_INPUT VS( VS_INPUT input )
 //--------------------------------------------------------------------------------------
 float4 PS( PS_INPUT input) : SV_Target
 {
+	//return float4(1.0f,1.0f,1.0f,1.0f);
 	return input.Colour;
 }
 
@@ -64,7 +65,7 @@ technique10 Render
     {
 		//SetRasterizerState(rs);	// wireframe!
 		SetDepthStencilState(ds, 0);
-		SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ), 0xFFFFFFFF );
+		//SetBlendState(SrcAlphaBlendingAdd, float4( 0.0f, 0.0f, 0.0f, 0.0f ), 0xFFFFFFFF );
         SetVertexShader( CompileShader( vs_4_0, VS() ) );
         SetGeometryShader( NULL );
         SetPixelShader( CompileShader( ps_4_0, PS() ) );

@@ -4,10 +4,10 @@
 #include "morph_render.h"
 #include "framework\graphics\d3d_app.h"
 #include "framework\graphics\device.h"
-#include "framework\graphics\shadowed_device.h"
 #include "framework\graphics\screenshot_helper.h"
 #include "framework\graphics\sprite_render.h"
 #include "framework\input.h"
+#include "bloom_render.h"
 
 class Biomorphs : public Module
 {
@@ -34,6 +34,8 @@ private:
 	bool m_doScreenshots;
 	MorphRender m_morphRenderer;
 
+	BloomRender m_bloom;
+
 	Font m_font;
 
 	Effect m_spriteShader;
@@ -41,7 +43,6 @@ private:
 	InputModule* m_inputModule;
 	D3DAppConfig m_appConfig;
 	Device m_device;
-	ShadowedDevice m_shadowDevice;
 	ScreenshotHelper m_screenshotHelper;
 	SpriteRender m_spriteRender;
 };

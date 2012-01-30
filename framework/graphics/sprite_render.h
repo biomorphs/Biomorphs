@@ -26,7 +26,7 @@ public:
 	void RemoveSprites();
 
 	void AddSprite( int spriteID, D3DXVECTOR2 position, D3DXVECTOR2 scale=D3DXVECTOR2(1.0f,1.0f) );
-	void Draw( ShadowedDevice& device, D3DXVECTOR2 startPosition, D3DXVECTOR2 scale );
+	void Draw( Device& device, D3DXVECTOR2 startPosition, D3DXVECTOR2 scale, const char* technique );
 
 	bool Create( Device& d, Parameters& p );
 	void Release( Device& d );
@@ -45,7 +45,7 @@ private:
 		int spriteID;
 	};
 
-	void updateSpriteMesh( ShadowedDevice& d );
+	void updateSpriteMesh( Device& d );
 	bool initGraphics(Device& d);
 
 	bool mDirty;

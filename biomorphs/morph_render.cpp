@@ -36,105 +36,47 @@ Texture2D MorphRender::CopyOutputTexture(Texture2D& texture)
 	return resultTexture;
 }
 
-int MorphRender::_drawRecursive( MorphDNA& dna, RecursionParams& params, MorphVertex* vertices, unsigned int* indices )
+int MorphRender::_drawRecursive( MorphDNA& dna, RecursionParams& params, MorphVertex*& vertices, unsigned int*& indices )
 {
 	if( params.branchDepth <= 0 )
 	{
 		return 0;
 	}
 
-	const float kBranchWidth = 0.09f;	// line width
-	const D3DXVECTOR2 baseDirection(0.0f, 1.0f);
+	const float kBranchWidth = 0.15f;	// line width
+	D3DXVECTOR2 branchDir;
+	D3DXVECTOR2 branchPerp;
+	GetGeometryVectors( params.Angle, params.Length, branchDir, branchPerp );	// calculate vectors
+	int vCount = WriteVertices( vertices, kBranchWidth, params.Colour, params.Origin, branchDir, branchPerp );	// write verts
+	int iCount = WriteQuadIndices( indices, params.vertexOffset );	// write indices
 
-	// rotate the direction, based on the params angle
-	D3DXMATRIX branchRotationMat;
-	D3DXMatrixRotationZ( &branchRotationMat, params.Angle );
-
-	// rotate the vector
-	D3DXVECTOR4 branchDirection4;
-	D3DXVec2Transform( &branchDirection4, &baseDirection, &branchRotationMat );
-	
-	// resolve to normalised 2d vector
-	D3DXVECTOR2 branchDirection2( branchDirection4.x, branchDirection4.y );
-	D3DXVec2Normalize( &branchDirection2, &branchDirection2 );
-
-	// now get the normalised perpendicular
-	D3DXVECTOR3 branchPerp3;
-	const D3DXVECTOR3 v0( 0.0f, 0.0f, -1.0f);
-	D3DXVECTOR3 v1( branchDirection2.x, branchDirection2.y, 0.0f );
-	D3DXVec3Cross( &branchPerp3, &v0, &v1 );
-	D3DXVECTOR2 branchPerpendicular( branchPerp3.x, branchPerp3.y );
-	D3DXVec2Normalize( &branchPerpendicular, &branchPerpendicular );
-	branchPerpendicular = branchPerpendicular * 0.5f * kBranchWidth;
-
-	// apply length to direction
-	branchDirection2 = branchDirection2 * params.Length;
-
-	// draw a single quad representing this branch
-	D3DXVECTOR4 branchColour = params.Colour;
-
-	vertices[0].mPosition = params.Origin - branchPerpendicular;
-	vertices[0].mColour = branchColour;
-
-	vertices[1].mPosition = params.Origin + branchPerpendicular;
-	vertices[1].mColour = branchColour;
-
-	vertices[2].mPosition = params.Origin + branchDirection2 + branchPerpendicular;
-	vertices[2].mColour = branchColour;
-
-	vertices[3].mPosition = params.Origin + branchDirection2 - branchPerpendicular;
-	vertices[3].mColour = branchColour;
-	vertices += 4;
-
-	// add some indices for the 2 triangles
-	indices[0] = params.vertexOffset + 0;	
-	indices[1] = params.vertexOffset + 2;		
-	indices[2] = params.vertexOffset + 1;
-
-	indices[3] = params.vertexOffset + 0;	
-	indices[4] = params.vertexOffset + 3;		
-	indices[5] = params.vertexOffset + 2;
-	indices += 6;
-
-	int indexCount = 6;
-
-	// add 2 children if required
-	if( params.branchDepth > 0 )
-	{
-		int newDepth = params.branchDepth-1;
-		float branchLength = BRANCHLENGTH(dna, newDepth);
-		float branchAngle = BRANCHANGLE(dna, newDepth);
-		D3DXVECTOR4 branchColour = BRANCHCOLOUR(dna, newDepth);
+	// calculate child parameters
+	int newDepth = params.branchDepth-1;
+	float branchLength = BRANCHLENGTH(dna, newDepth);
+	float branchAngle = BRANCHANGLE(dna, newDepth);
+	D3DXVECTOR4 branchColour = BRANCHCOLOUR(dna, newDepth);
 		
-		// now draw 2 child branches
-		RecursionParams childParams;
-		childParams.branchDepth = params.branchDepth - 1;
-		childParams.Length = branchLength;
-		childParams.Origin = params.Origin + branchDirection2;
-		childParams.Colour = branchColour;
+	// now draw 2 child branches
+	RecursionParams childParams;
+	childParams.branchDepth = newDepth;
+	childParams.Length = branchLength;
+	childParams.Origin = params.Origin + branchDir;
+	childParams.Colour = branchColour;
+	childParams.Angle = params.Angle + branchAngle;
+	childParams.vertexOffset = params.vertexOffset + vCount;
 
-		childParams.Angle = params.Angle + branchAngle;
-		childParams.vertexOffset = params.vertexOffset + 4;
-		int ch0Indices = _drawRecursive( dna, childParams, vertices, indices );
+	int ch0Indices = _drawRecursive( dna, childParams, vertices, indices );
+	childParams.vertexOffset += ((ch0Indices / 6) * 4);
 
-		// move vb + ib pointers along
-		indices += ch0Indices;
-		vertices += ((ch0Indices / 6) * 4);
-		childParams.vertexOffset += ((ch0Indices / 6) * 4);
+	childParams.Angle = params.Angle - branchAngle;
+	int ch1Indices = _drawRecursive( dna, childParams, vertices, indices );
 
-		childParams.Angle = params.Angle - branchAngle;
+	iCount += ch0Indices + ch1Indices;
 
-		int ch1Indices = _drawRecursive( dna, childParams, vertices, indices );
-		indices += ch1Indices;
-		vertices += ((ch1Indices / 6) * 4);
-
-		indexCount += ch0Indices + ch1Indices;
-	}
-
-	return indexCount;
+	return iCount;
 }
 
-void MorphRender::DrawBiomorph( D3DXVECTOR2 origin, MorphDNA& dna )
+void MorphRender::DrawBiomorph( MorphDNA& dna )
 {
 	if( m_verticesWritten > kMaxVertices || m_indicesWritten > kMaxIndices )
 	{
@@ -147,10 +89,12 @@ void MorphRender::DrawBiomorph( D3DXVECTOR2 origin, MorphDNA& dna )
 	baseParams.branchDepth = BASEDEPTH(dna);
 	baseParams.Angle = 0;						// Start straight up
 	baseParams.Length = BASELENGTH(dna);
-	baseParams.Origin = origin;
+	baseParams.Origin = D3DXVECTOR2(0.0f,0.0f);
 	baseParams.Colour = BASECOLOUR(dna);
 
-	int indexCount = _drawRecursive( dna, baseParams, m_lockedVBData + m_verticesWritten, m_lockedIBData + m_indicesWritten );
+	MorphVertex* v = m_lockedVBData + m_verticesWritten;
+	unsigned int* i = m_lockedIBData + m_indicesWritten;
+	int indexCount = _drawRecursive( dna, baseParams, v, i );
 	m_verticesWritten += (indexCount / 6) * 4;
 	m_indicesWritten += indexCount;
 }

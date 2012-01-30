@@ -18,7 +18,7 @@ void SpriteRender::AddSprite( int spriteID, D3DXVECTOR2 position, D3DXVECTOR2 sc
 	mDirty = true;
 }
 
-void SpriteRender::Draw( ShadowedDevice& device, D3DXVECTOR2 startPosition, D3DXVECTOR2 scale )
+void SpriteRender::Draw( Device& device, D3DXVECTOR2 startPosition, D3DXVECTOR2 scale, const char* technique )
 {
 	if( mDirty )
 	{
@@ -26,7 +26,7 @@ void SpriteRender::Draw( ShadowedDevice& device, D3DXVECTOR2 startPosition, D3DX
 		mDirty = false;
 	}
 
-	EffectTechnique t = m_shader.GetTechniqueByName("Render");
+	EffectTechnique t = m_shader.GetTechniqueByName(technique);
 	TextureSampler sampler = t.GetSamplerByName("BlitTexture");
 	VectorConstant posScale = t.GetVectorConstant("PositionScale");
 	if( m_texture.IsValid() )
@@ -77,10 +77,8 @@ bool SpriteRender::Create( Device& d, Parameters& p )
 	return initGraphics(d);
 }
 
-void SpriteRender::updateSpriteMesh( ShadowedDevice& d )
+void SpriteRender::updateSpriteMesh( Device& dd )
 {
-	Device dd = d.GetDevice();
-
 	// lock the vertex buffer
 	SpriteVertex* vertices = (SpriteVertex*)dd.LockVB(m_spriteVb);
 
