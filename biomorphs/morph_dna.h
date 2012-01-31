@@ -2,6 +2,8 @@
 #define MORPH_DNA_INCLUDED
 
 #include "core/angles.h"
+#include "core/minmax.h"
+#include "core/random.h"
 
 typedef unsigned long long uint_64;
 
@@ -161,6 +163,60 @@ inline D3DXVECTOR4 BRANCHCOLOUR(MorphDNA&dna, int depth)
 	float b = mod * baseColour.z;
 
 	return D3DXVECTOR4( r, g, b, 1.0f );
+}
+
+inline int MutateGene(  int originalValue,
+						int modification,
+						int valueMin,
+						int valueMax )
+{
+	int bd = originalValue + modification;
+	bd = Bounds::Max( valueMin, bd );
+	return Bounds::Min( valueMax, bd );
+}
+
+inline void MutateDNA( MorphDNA& dna )
+{
+	int gene = Random::getInt(0,10);
+	int direction = Random::getInt(0,100);
+	int dir = direction > 50 ? 1 : -1;
+
+	switch(gene)
+	{
+	case 0:
+		dna.mBranchDepth = MutateGene( dna.mBranchDepth, dir, 1, 15 );
+		break;
+	case 1:
+		dna.mBranchInitialAngle = MutateGene( dna.mBranchInitialAngle, dir * 2, 1, 127 );
+		break;
+	case 2:
+		dna.mBranchInitialLength = MutateGene( dna.mBranchInitialLength, dir * 1, 1, 63 );
+		break;
+	case 3:
+		dna.mBranchLengthModifier = MutateGene( dna.mBranchLengthModifier, dir * 4, 1, 255 );
+		break;
+	case 4:
+		dna.mBranchAngleModifier = MutateGene( dna.mBranchAngleModifier, dir * 4, 1, 255 );
+		break;
+	case 5:
+		dna.mBaseColourRed = MutateGene( dna.mBaseColourRed, dir * 1, 1, 31 );
+		break;
+	case 6:
+		dna.mBaseColourGreen = MutateGene( dna.mBaseColourGreen, dir * 1, 1, 31 );
+		break;
+	case 7:
+		dna.mBaseColourBlue = MutateGene( dna.mBaseColourBlue, dir * 1, 1, 31 );
+		break;
+	case 8:
+		dna.mBranchRedModifier = MutateGene( dna.mBranchRedModifier, dir * 3, 1, 255 );
+		break;
+	case 9:
+		dna.mBranchGreenModifier = MutateGene( dna.mBranchGreenModifier, dir * 3, 1, 255 );
+		break;
+	case 10:
+		dna.mBranchBlueModifier = MutateGene( dna.mBranchBlueModifier, dir * 3, 1, 255 );
+		break;
+	}
 }
 
 #endif
