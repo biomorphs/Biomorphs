@@ -19,6 +19,7 @@ public:
 		return m_multiplier;
 	}
 
+	float getSystemTime();
 	void reset();
 	void nextTick();
 	float getDelta();

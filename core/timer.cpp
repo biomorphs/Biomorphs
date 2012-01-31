@@ -21,6 +21,15 @@ void Timer::reset()
 	m_deltaSeconds = 0.0f;
 }
 
+float Timer::getSystemTime()
+{
+	LARGE_INTEGER thisTime;
+	QueryPerformanceCounter( &thisTime );
+	float result = (float)(thisTime.QuadPart - m_startTime.QuadPart) / (float)m_frequency.QuadPart;
+
+	return result;
+}
+
 void Timer::nextTick()
 {
 	LARGE_INTEGER thisTime;

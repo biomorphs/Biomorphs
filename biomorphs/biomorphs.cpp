@@ -1,5 +1,6 @@
 #include "biomorphs.h"
 #include "core\random.h"
+#include "core\profiler.h"
 
 #include <ctime>
 
@@ -42,53 +43,78 @@ void Biomorphs::_resetDNA()
 	m_generation = 0;
 }
 
-void Biomorphs::_render()
+void Biomorphs::_render(Timer& timer)
 {
-	// render the current generation to a texture
+	PROFILER_RESET();
+
 	float aspect = (float)m_appConfig.m_windowWidth / (float)m_appConfig.m_windowHeight;
-	D3DXVECTOR4 posScale( 0.0f, 0.0f, 0.1f, 0.1f );
-	m_morphRenderer.StartRendering();
-	m_morphRenderer.DrawBiomorph( m_testDNA );
-	m_morphRenderer.EndRendering( posScale );
 
-	// switch back to rendering to back buffer
-	Rendertarget& backBuffer = m_device.GetBackBuffer();
-	DepthStencilBuffer& depthBuffer = m_device.GetDepthStencilBuffer();
-	m_device.SetRenderTargets( &backBuffer, &depthBuffer );
+	// render the current generation to a texture
+	{
+		SCOPED_PROFILE(MorphGeneration,timer);
 
-	// Set the viewport
-	Viewport vp;
-	vp.topLeft = Vector2(0,0);
-	vp.depthRange = Vector2f(0.0f,1.0f);
-	vp.dimensions = Vector2(m_appConfig.m_windowWidth, m_appConfig.m_windowHeight);
-	m_device.SetViewport( vp );
+		D3DXVECTOR4 posScale( 0.0f, 0.0f, 0.1f, 0.1f );
+		m_morphRenderer.StartRendering();
+		m_morphRenderer.DrawBiomorph( m_testDNA );
+		m_morphRenderer.EndRendering( posScale );
+	}
 
-	// Clear buffers
-	static float clearColour[4] = {0.0f, 0.1f, 0.25f, 1.0f};
-	m_device.ClearTarget( backBuffer, clearColour );
-	m_device.ClearTarget( depthBuffer, 1.0f, 0 );
+	{
+		SCOPED_PROFILE(RenderSprites,timer);
 
-	// draw the biomorph as a sprite
+		// switch back to rendering to back buffer
+		Rendertarget& backBuffer = m_device.GetBackBuffer();
+		DepthStencilBuffer& depthBuffer = m_device.GetDepthStencilBuffer();
+		m_device.SetRenderTargets( &backBuffer, &depthBuffer );
 
-	Texture2D& morphTexture = m_morphRenderer.CopyOutputTexture(m_spriteRender.GetTexture());
-	m_spriteRender.GetTexture() = morphTexture;
+		// Set the viewport
+		Viewport vp;
+		vp.topLeft = Vector2(0,0);
+		vp.depthRange = Vector2f(0.0f,1.0f);
+		vp.dimensions = Vector2(m_appConfig.m_windowWidth, m_appConfig.m_windowHeight);
+		m_device.SetViewport( vp );
+
+		// Clear buffers
+		static float clearColour[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+		m_device.ClearTarget( backBuffer, clearColour );
+		m_device.ClearTarget( depthBuffer, 1.0f, 0 );
+
+		// draw the biomorph as a sprite
+		Texture2D& morphTexture = m_morphRenderer.CopyOutputTexture(m_spriteRender.GetTexture());
+		m_spriteRender.GetTexture() = morphTexture;
 		 
-	m_spriteRender.RemoveSprites();
-	m_spriteRender.AddSprite( 0, D3DXVECTOR2(-0.7f,-0.7f), D3DXVECTOR2(1.4f,1.4f) );
-	float scale = 0.6f;
-	m_spriteRender.Draw( m_device, D3DXVECTOR2(0.0f,0.0f), D3DXVECTOR2(scale,scale*aspect), "Render" );
+		m_spriteRender.RemoveSprites();
+		m_spriteRender.AddSprite( 0, D3DXVECTOR2(-0.7f,-0.7f), D3DXVECTOR2(1.4f,1.4f) );
+		float scale = 0.6f;
+		m_spriteRender.Draw( m_device, D3DXVECTOR2(0.0f,0.0f), D3DXVECTOR2(scale,scale*aspect), "Render" );
+	}
 
-	//now render the bloom from the backbuffer
-	m_bloom.Render();
+	{
+		SCOPED_PROFILE(RenderBloom,timer);
+		
+		//now render the bloom from the backbuffer
+		static BloomRender::DrawParameters dp( 0.2f, 1.0f,
+											   0.0f, 0.0f,
+											   0.8f, 0.7f );
+		m_bloom.Render(dp);
+	}
 
 	char textOut[256] = {'\0'};
 	Font::DrawParameters dp;
 	const float textColour[] = {1.0f,1.0f,1.0f,1.0f};
-	Vector2 textPos( 16, m_appConfig.m_windowHeight - 64 );
+	Vector2 textPos( 16, m_appConfig.m_windowHeight - 160 );
 	memcpy( dp.mColour, textColour, sizeof(textColour) );
 
-	sprintf_s(textOut, "Generation: %d", m_generation);
+	// render profiler data
 	dp.mJustification = Font::DRAW_LEFT;
+	PROFILER_ITERATE_DATA(ItName)
+	{
+		sprintf_s(textOut, "%s: %3.3fms\n", (*ItName).second.mName.c_str(), (*ItName).second.mTimeDiff * 1000.0f);
+		m_device.DrawText( textOut, m_font, dp, textPos );	textPos.y() = textPos.y() + 18;
+	}
+
+	textPos.y() = textPos.y() + 40;
+	sprintf_s(textOut, "Generation: %d", m_generation);
 	m_device.DrawText( textOut, m_font, dp, textPos );
 
 	textPos.y() = textPos.y() + 18;
@@ -269,13 +295,15 @@ bool Biomorphs::_update(Timer& timer)
 bool Biomorphs::update( Timer& timer )
 {
 	_update(timer);
-	_render();
+	_render(timer);
 
 	return true;
 }
 
 bool Biomorphs::shutdown()
 {
+	PROFILER_CLEANUP();
+
 	m_bloom.Release();
 
 	m_device.Release(m_spriteRender.GetTexture());

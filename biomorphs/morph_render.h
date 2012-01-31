@@ -3,6 +3,7 @@
 
 #include "framework\graphics\device_types.h"
 #include "morph_dna.h"
+#include "core/minmax.h"
 
 class MorphRender
 {
@@ -38,13 +39,16 @@ private:
 	};
 
 	// calculate direction and perpendicular (normalised)
+	inline void CalculateBounds( const D3DXVECTOR2& origin, D3DXVECTOR2& direction, D3DXVECTOR2& min, D3DXVECTOR2& max );
 	inline void GetGeometryVectors( float angle, float length, D3DXVECTOR2& direction, D3DXVECTOR2& perpendicular );
 	inline int WriteVertices( MorphVertex*& vertices, 
 								float width,
 								const D3DXVECTOR4& colour,
 								const D3DXVECTOR2& origin,
 								const D3DXVECTOR2& direction, 
-								const D3DXVECTOR2& perpendicular );
+								const D3DXVECTOR2& perpendicular,
+								const D3DXVECTOR2& offset,
+								float scale);
 	inline int WriteQuadIndices( unsigned int*& indices, int vertexOffset );
 
 	// recursion structure (saves passing lots of arguments)
@@ -58,6 +62,12 @@ private:
 		float Angle;			// branch angle (0 = straight up)
 		float Length;			// length of a branch
 		D3DXVECTOR4 Colour;		// branch colour
+
+		bool Draw;				// flag to switch between draw and bounds calculation
+		D3DXVECTOR2 BoundsMin;
+		D3DXVECTOR2 BoundsMax;
+
+		float DrawScale;
 	};
 
 	// returns indices written
@@ -108,24 +118,44 @@ inline int MorphRender::WriteVertices( MorphVertex*& vertices,
 										const D3DXVECTOR4& colour,
 										const D3DXVECTOR2& origin,
 										const D3DXVECTOR2& direction, 
-										const D3DXVECTOR2& perpendicular )
+										const D3DXVECTOR2& perpendicular,
+										const D3DXVECTOR2& offset,
+										float scale)
 {
 	const D3DXVECTOR2 perp = perpendicular * width;
+	const D3DXVECTOR2 o(origin + offset);
+	const D3DXVECTOR2 d(direction.x * scale, direction.y * scale);
 
-	vertices[0].mPosition = origin - perp;
+	vertices[0].mPosition = o - perp;
 	vertices[0].mColour = colour;
 
-	vertices[1].mPosition = origin + perp;
+	vertices[1].mPosition = o + perp;
 	vertices[1].mColour = colour;
 
-	vertices[2].mPosition = origin + direction + perp;
+	vertices[2].mPosition = o + d + perp;
 	vertices[2].mColour = colour;
 
-	vertices[3].mPosition = origin + direction - perp;
+	vertices[3].mPosition = o + d - perp;
 	vertices[3].mColour = colour;
 	vertices += 4;
 
 	return 4;
+}
+
+inline void MorphRender::CalculateBounds( const D3DXVECTOR2& origin, D3DXVECTOR2& direction, D3DXVECTOR2& min, D3DXVECTOR2& max )
+{
+	// calculate min and max
+	min.x = Bounds::Min(min.x, origin.x);
+	min.x = Bounds::Min(min.x, origin.x + direction.x);
+
+	min.y = Bounds::Min(min.y, origin.y);
+	min.y = Bounds::Min(min.y, origin.y + direction.y);
+
+	max.x = Bounds::Max(max.x, origin.x);
+	max.x = Bounds::Max(max.x, origin.x + direction.x);
+
+	max.y = Bounds::Max(max.y, origin.y);
+	max.y = Bounds::Max(max.y, origin.y + direction.y);
 }
 
 // calculate direction and perpendicular (normalised)

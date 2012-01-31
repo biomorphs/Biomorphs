@@ -150,8 +150,8 @@ void Device::PresentBackbuffer()
 
 void Device::ResetShaderState()
 {
-	ID3D10ShaderResourceView *const pSRV[2] = {NULL,NULL};
-	m_d3dDevice->PSSetShaderResources( 0, 2, pSRV );
+	ID3D10ShaderResourceView *const pSRV[8] = {NULL};
+	m_d3dDevice->PSSetShaderResources( 0, 8, pSRV );
 }
 
 void Device::Flush()

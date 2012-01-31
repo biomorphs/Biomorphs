@@ -33,10 +33,12 @@ struct PS_INPUT
 // Textures and samplers
 Texture2D BlitTexture;				// main texture
 Texture2D Tinyblur;					// tiny blur texture
+Texture2D Quarterblur;				// quarter blur texture
+Texture2D Halfblur;					// quarter blur texture
 
 SamplerState sampleLinear
 {
-    Filter = MIN_MAG_MIP_LINEAR;	// play around with this
+    Filter = MIN_MAG_MIP_LINEAR;
     AddressU = Wrap;
     AddressV = Wrap;
 };
@@ -46,7 +48,9 @@ SamplerState sampleLinear
 
 float4 PositionScale;
 float2 PixelSize;
-float2 BloomConsts;	// x = threshold, y = mul
+float2 TinyBloomConsts;	// x = threshold, y = mul
+float2 QuarterBloomConsts;	// x = threshold, y = mul
+float2 HalfBloomConsts;	// x = threshold, y = mul
 
 ///////////////////////////////////////////////////////////////////////////////////////
 // Vertex shader
@@ -67,13 +71,30 @@ float4 PS_COMBINE( PS_INPUT input) : SV_Target
 {
 	float4 full = BlitTexture.Sample( sampleLinear, input.UV );
 	float4 tblr = Tinyblur.Sample( sampleLinear, input.UV );
+	float4 qblr = Quarterblur.Sample( sampleLinear, input.UV );
+	float4 hblr = Halfblur.Sample( sampleLinear, input.UV );
 
-	// now calculate the luminance from the blurred colour
-	float lum = (0.4f * tblr.x) + (0.55f * tblr.y) + (0.16f * tblr.z);
+	// now calculate the luminance from each blur level
+	float tinyLum = length(tblr.xyz);
+	float quarterlum = length(qblr.xyz);
+	float halflum = length(hblr.xyz);
 
-	float br = max(lum - BloomConsts.x,0.0f) * BloomConsts.y;
+	// threshold + multiply final values
+	float tr = max(tinyLum - TinyBloomConsts.x,0.0f) * ( 1.0f / (1.0f - TinyBloomConsts.x) );
+	float qr = max(quarterlum - QuarterBloomConsts.x,0.0f) * ( 1.0f / (1.0f - QuarterBloomConsts.x) );
+	float hr = max(halflum - HalfBloomConsts.x,0.0f) * ( 1.0f / (1.0f - HalfBloomConsts.x) );
 
-	return full + (tblr * br);
+	// now scale the luminances logarithmicly
+	// log10(0.1) = -1, log10(10) = 1
+	float lty = (1.0f + log10(0.1f + (9.0f * tr))) / 2.0f;
+	float qty = (1.0f + log10(0.1f + (9.0f * qr))) / 2.0f;
+	float hty = (1.0f + log10(0.1f + (9.0f * hr))) / 2.0f;
+
+	return float4(full.xyz + 
+				 (lty * tblr * TinyBloomConsts.y) + 
+				 (qty * qblr * QuarterBloomConsts.y) + 
+				 (hty * hblr * HalfBloomConsts.y), 
+				 1.0f);
 }
 
 technique10 Combine

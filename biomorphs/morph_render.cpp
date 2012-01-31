@@ -47,8 +47,20 @@ int MorphRender::_drawRecursive( MorphDNA& dna, RecursionParams& params, MorphVe
 	D3DXVECTOR2 branchDir;
 	D3DXVECTOR2 branchPerp;
 	GetGeometryVectors( params.Angle, params.Length, branchDir, branchPerp );	// calculate vectors
-	int vCount = WriteVertices( vertices, kBranchWidth, params.Colour, params.Origin, branchDir, branchPerp );	// write verts
-	int iCount = WriteQuadIndices( indices, params.vertexOffset );	// write indices
+
+	int vCount = 0;
+	int iCount = 0;
+	if( params.Draw )
+	{
+		D3DXVECTOR2 offset(0.0f,0.0f);
+		vCount = WriteVertices( vertices, kBranchWidth, params.Colour, params.Origin, branchDir, branchPerp, offset, params.DrawScale );	// write verts
+		iCount = WriteQuadIndices( indices, params.vertexOffset );	// write indices
+	}
+	else
+	{
+		// calculate the bounds
+		CalculateBounds( params.Origin, branchDir, params.BoundsMin, params.BoundsMax );
+	}
 
 	// calculate child parameters
 	int newDepth = params.branchDepth-1;
@@ -60,16 +72,28 @@ int MorphRender::_drawRecursive( MorphDNA& dna, RecursionParams& params, MorphVe
 	RecursionParams childParams;
 	childParams.branchDepth = newDepth;
 	childParams.Length = branchLength;
-	childParams.Origin = params.Origin + branchDir;
+	childParams.Origin = params.Origin + branchDir * params.DrawScale;
 	childParams.Colour = branchColour;
 	childParams.Angle = params.Angle + branchAngle;
 	childParams.vertexOffset = params.vertexOffset + vCount;
+	childParams.BoundsMin = params.BoundsMin;
+	childParams.BoundsMax = params.BoundsMax;
+	childParams.Draw = params.Draw;
+	childParams.DrawScale = params.DrawScale;
 
 	int ch0Indices = _drawRecursive( dna, childParams, vertices, indices );
 	childParams.vertexOffset += ((ch0Indices / 6) * 4);
+	params.BoundsMin.x = Bounds::Min(params.BoundsMin.x, childParams.BoundsMin.x);
+	params.BoundsMin.y = Bounds::Min(params.BoundsMin.y, childParams.BoundsMin.y);
+	params.BoundsMax.x = Bounds::Max(params.BoundsMax.x, childParams.BoundsMax.x);
+	params.BoundsMax.y = Bounds::Max(params.BoundsMax.y, childParams.BoundsMax.y);
 
 	childParams.Angle = params.Angle - branchAngle;
 	int ch1Indices = _drawRecursive( dna, childParams, vertices, indices );
+	params.BoundsMin.x = Bounds::Min(params.BoundsMin.x, childParams.BoundsMin.x);
+	params.BoundsMin.y = Bounds::Min(params.BoundsMin.y, childParams.BoundsMin.y);
+	params.BoundsMax.x = Bounds::Max(params.BoundsMax.x, childParams.BoundsMax.x);
+	params.BoundsMax.y = Bounds::Max(params.BoundsMax.y, childParams.BoundsMax.y);
 
 	iCount += ch0Indices + ch1Indices;
 
@@ -84,6 +108,10 @@ void MorphRender::DrawBiomorph( MorphDNA& dna )
 		return ;
 	}
 
+	MorphVertex* v = NULL;
+	unsigned int* i = NULL;
+
+	// first calculate the overal bounds
 	RecursionParams baseParams;
 	baseParams.vertexOffset = m_verticesWritten;
 	baseParams.branchDepth = BASEDEPTH(dna);
@@ -91,9 +119,19 @@ void MorphRender::DrawBiomorph( MorphDNA& dna )
 	baseParams.Length = BASELENGTH(dna);
 	baseParams.Origin = D3DXVECTOR2(0.0f,0.0f);
 	baseParams.Colour = BASECOLOUR(dna);
+	baseParams.BoundsMin = D3DXVECTOR2(1.0f,1.0f);
+	baseParams.BoundsMax = D3DXVECTOR2(0.0f,0.0f);
+	baseParams.DrawScale = 1.0f;
+	baseParams.Draw = false;
+	_drawRecursive( dna, baseParams, v, i );
 
-	MorphVertex* v = m_lockedVBData + m_verticesWritten;
-	unsigned int* i = m_lockedIBData + m_indicesWritten;
+	// now draw, rescaling using the bounds
+	D3DXVECTOR2 dimensions(baseParams.BoundsMax.x - baseParams.BoundsMin.x,baseParams.BoundsMax.y - baseParams.BoundsMin.y);
+	baseParams.DrawScale = 8.0f / Bounds::Max(dimensions.x, dimensions.y);
+
+	v = m_lockedVBData + m_verticesWritten;
+	i = m_lockedIBData + m_indicesWritten;
+	baseParams.Draw = true;
 	int indexCount = _drawRecursive( dna, baseParams, v, i );
 	m_verticesWritten += (indexCount / 6) * 4;
 	m_indicesWritten += indexCount;

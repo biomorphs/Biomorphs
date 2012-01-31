@@ -1,7 +1,7 @@
 #include "bloom_render.h"
 #include "framework\graphics\device.h"
 
-void BloomRender::CombineTargets( BloomRT& fullTarget, BloomRT& tinyBlur )
+void BloomRender::CombineTargets( BloomRT& fullTarget, BloomRT& tinyBlur, BloomRT& quarterBlur, BloomRT& halfBlurr, const DrawParameters& p )
 {
 	m_device->ResetShaderState();	// flush currently bound rt
 	m_device->SetRenderTargets( &m_device->GetBackBuffer(), &m_device->GetDepthStencilBuffer() );
@@ -21,18 +21,27 @@ void BloomRender::CombineTargets( BloomRT& fullTarget, BloomRT& tinyBlur )
 	m_device->ClearTarget(m_device->GetDepthStencilBuffer(), 1.0f, 0 );
 	m_spriteRender.GetTexture() = m_fullscreen.mTexture;	// use the fullscreen rt as base texture
 
-	// set the blur sampler
+	// set the blur samplers
 	EffectTechnique t = m_effect.GetTechniqueByName("Combine");
+
 	TextureSampler tinyblur = t.GetSamplerByName("Tinyblur");
 	tinyblur.Set( tinyBlur.mTexture );
 
+	TextureSampler quarterblur = t.GetSamplerByName("Quarterblur");
+	quarterblur.Set( quarterBlur.mTexture );
+
+	TextureSampler halfblur = t.GetSamplerByName("Halfblur");
+	halfblur.Set( halfBlurr.mTexture );
+
 	// set the bloom constants
-	static float th = 0.35f;
-	static float m = 3.0f;
-	VectorConstant ps = t.GetVectorConstant("BloomConsts");
-	D3DXVECTOR4 v = D3DXVECTOR4(th,m,0.0f,0.0f);
-	ps.Set(v);
-	ps.Apply();
+	VectorConstant ps = t.GetVectorConstant("TinyBloomConsts");
+	ps.Set(p.TinyBlurConsts);	ps.Apply();
+
+	ps = t.GetVectorConstant("QuarterBloomConsts");
+	ps.Set(p.QuarterBlurConsts);	ps.Apply();
+
+	ps = t.GetVectorConstant("HalfBloomConsts");
+	ps.Set(p.HalfBlurConsts);	ps.Apply();
 
 	const float scale = 1.0f;
 	m_spriteRender.Draw( *m_device, D3DXVECTOR2(0.0f,0.0f), D3DXVECTOR2(scale,scale), "Combine" );
@@ -65,7 +74,6 @@ void BloomRender::RenderTargetToTarget( BloomRT& src, BloomRT& dst, const char* 
 	D3DXVECTOR4 pixelSize = D3DXVECTOR4( 1.0f / (float)dst.mTexture.GetParameters().height,
 										 1.0f / (float)dst.mTexture.GetParameters().width,
 										 0.0f, 0.0f );
-	pixelSize = pixelSize * 0.5f;
 	ps.Set( pixelSize );
 	ps.Apply();
 
@@ -79,7 +87,7 @@ void BloomRender::RenderTargetToTarget( BloomRT& src, BloomRT& dst, const char* 
 	m_spriteRender.Draw( *m_device, D3DXVECTOR2(0.0f,0.0f), D3DXVECTOR2(scale,scale*aspect), technique );
 }
 
-void BloomRender::Render()
+void BloomRender::Render(const DrawParameters& p)
 {
 	Texture2D backBufferTexture = m_device->GetBackBufferTexture();
 	
@@ -95,12 +103,20 @@ void BloomRender::Render()
 	// .. and again
 	RenderTargetToTarget(m_quarterRes, m_tiny, "Downsample");
 
-	// 2 pass blur
+	// 2 pass blur on half
+	RenderTargetToTarget(m_halfRes, m_halfBlur, "BlurH");
+	RenderTargetToTarget(m_halfBlur, m_halfRes, "BlurV");
+
+	// 2 pass blur on quarter
+	RenderTargetToTarget(m_quarterRes, m_quarterBlur, "BlurH");
+	RenderTargetToTarget(m_quarterBlur, m_quarterRes, "BlurV");
+
+	// 2 pass blur on tiny
 	RenderTargetToTarget(m_tiny, m_tinyBlur, "BlurH");
 	RenderTargetToTarget(m_tinyBlur, m_tiny, "BlurV");
 
 	// final combine back to back buffer
-	CombineTargets( m_fullscreen, m_tiny );
+	CombineTargets( m_fullscreen, m_tiny, m_quarterBlur, m_halfBlur, p );
 }
 
 Texture2D BloomRender::CreateRTTexture(int width, int height, Texture2D::TextureFormat format)
@@ -165,6 +181,9 @@ void BloomRender::Create(Device* d, Parameters& p)
 	m_halfRes = CreateRenderTarget( p.mWidth / 2, p.mHeight / 2, Texture2D::TypeFloat32 );
 	m_quarterRes = CreateRenderTarget( p.mWidth / 4, p.mHeight / 4, Texture2D::TypeFloat32 );
 	m_tiny = CreateRenderTarget( p.mWidth / 8, p.mHeight / 8, Texture2D::TypeFloat32 );
+	
+	m_halfBlur = CreateRenderTarget( p.mWidth / 2, p.mHeight / 2, Texture2D::TypeFloat32 );
+	m_quarterBlur = CreateRenderTarget( p.mWidth / 4, p.mHeight / 4, Texture2D::TypeFloat32 );
 	m_tinyBlur = CreateRenderTarget( p.mWidth / 8, p.mHeight / 8, Texture2D::TypeFloat32 );
 
 	// create sprite renderer
@@ -179,8 +198,11 @@ void BloomRender::Release()
 {
 	m_spriteRender.Release(*m_device);
 
-	Release( m_tiny );
 	Release( m_tinyBlur );
+	Release( m_quarterBlur );
+	Release( m_halfBlur );
+
+	Release( m_tiny );
 	Release( m_quarterRes );
 	Release( m_halfRes );
 	Release( m_fullscreen );

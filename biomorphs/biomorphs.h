@@ -24,7 +24,7 @@ private:
 	void _resetDNA();
 
 	bool _update(Timer& timer);
-	void _render();
+	void _render(Timer& timer);
 	bool _initialise();
 
 	bool initDevice();
