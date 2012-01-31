@@ -20,8 +20,9 @@ public:
 	bool Release();
 
 	void StartRendering();	// call this at the start of the frame
-	void DrawBiomorph( MorphDNA& dna );
-	void EndRendering(D3DXVECTOR4 posScale);	// call this to push all data to D3D
+	void CalculateBounds( MorphDNA& dna, D3DXVECTOR2& min, D3DXVECTOR2& max );
+	void DrawBiomorph( MorphDNA& dna, D3DXVECTOR2 offset = D3DXVECTOR2(0.0f,0.0f), float size = 1.0f );
+	void EndRendering();	// call this to push all data to D3D
 
 	inline int GetVertexCount()
 	{
@@ -38,7 +39,6 @@ private:
 		D3DXVECTOR4 mColour;	
 	};
 
-	// calculate direction and perpendicular (normalised)
 	inline void CalculateBounds( const D3DXVECTOR2& origin, D3DXVECTOR2& direction, D3DXVECTOR2& min, D3DXVECTOR2& max );
 	inline void GetGeometryVectors( float angle, float length, D3DXVECTOR2& direction, D3DXVECTOR2& perpendicular );
 	inline int WriteVertices( MorphVertex*& vertices, 
@@ -48,7 +48,7 @@ private:
 								const D3DXVECTOR2& direction, 
 								const D3DXVECTOR2& perpendicular,
 								const D3DXVECTOR2& offset,
-								float scale);
+								float drawScale );
 	inline int WriteQuadIndices( unsigned int*& indices, int vertexOffset );
 
 	// recursion structure (saves passing lots of arguments)
@@ -72,6 +72,7 @@ private:
 
 	// returns indices written
 	int _drawRecursive( MorphDNA& dna, RecursionParams& params, MorphVertex*& vertices, unsigned int*& indices );
+	inline void _buildRenderParameters( MorphDNA& dna, RecursionParams& p );
 
 	static const int kMaxVertices = 4 * 1024 * 1024;
 	static const int kMaxIndices = kMaxVertices * 6;
@@ -97,6 +98,20 @@ private:
 	Texture2D m_texture;
 };
 
+inline void MorphRender::_buildRenderParameters( MorphDNA& dna, RecursionParams& p )
+{
+	p.vertexOffset = m_verticesWritten;
+	p.branchDepth = BASEDEPTH(dna);
+	p.Angle = 0;
+	p.Length = BASELENGTH(dna);
+	p.Origin = D3DXVECTOR2(0.0f,0.0f);
+	p.Colour = BASECOLOUR(dna);
+	p.BoundsMin = D3DXVECTOR2(1.0f,1.0f);
+	p.BoundsMax = D3DXVECTOR2(0.0f,0.0f);
+	p.Draw = false;
+	p.DrawScale = 1.0f;
+}
+
 inline int MorphRender::WriteQuadIndices( unsigned int*& indices, int vertexOffset )
 {
 	// add some indices for the 2 triangles
@@ -120,22 +135,22 @@ inline int MorphRender::WriteVertices( MorphVertex*& vertices,
 										const D3DXVECTOR2& direction, 
 										const D3DXVECTOR2& perpendicular,
 										const D3DXVECTOR2& offset,
-										float scale)
+										float drawScale)
 {
 	const D3DXVECTOR2 perp = perpendicular * width;
 	const D3DXVECTOR2 o(origin + offset);
-	const D3DXVECTOR2 d(direction.x * scale, direction.y * scale);
+	const D3DXVECTOR2 d = direction;
 
-	vertices[0].mPosition = o - perp;
+	vertices[0].mPosition = o - (perp * drawScale);
 	vertices[0].mColour = colour;
 
-	vertices[1].mPosition = o + perp;
+	vertices[1].mPosition = o + (perp * drawScale);
 	vertices[1].mColour = colour;
 
-	vertices[2].mPosition = o + d + perp;
+	vertices[2].mPosition = o + (d + perp) * drawScale;
 	vertices[2].mColour = colour;
 
-	vertices[3].mPosition = o + d - perp;
+	vertices[3].mPosition = o + (d - perp) * drawScale;
 	vertices[3].mColour = colour;
 	vertices += 4;
 

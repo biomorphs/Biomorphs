@@ -1,5 +1,6 @@
 #include "biomorphs/morph_render.h"
 #include "framework/graphics/device.h"
+#include "core/profiler.h"
 
 MorphRender::MorphRender()
 {
@@ -11,6 +12,7 @@ MorphRender::~MorphRender()
 
 Texture2D MorphRender::CopyOutputTexture(Texture2D& texture)
 {
+	SCOPED_PROFILE(CopyMorphTexture);
 	Texture2D resultTexture = texture;;
 	if( !resultTexture.IsValid() )
 	{
@@ -43,7 +45,7 @@ int MorphRender::_drawRecursive( MorphDNA& dna, RecursionParams& params, MorphVe
 		return 0;
 	}
 
-	const float kBranchWidth = 0.15f;	// line width
+	const float kBranchWidth = 0.1f;	// line width
 	D3DXVECTOR2 branchDir;
 	D3DXVECTOR2 branchPerp;
 	GetGeometryVectors( params.Angle, params.Length, branchDir, branchPerp );	// calculate vectors
@@ -72,7 +74,7 @@ int MorphRender::_drawRecursive( MorphDNA& dna, RecursionParams& params, MorphVe
 	RecursionParams childParams;
 	childParams.branchDepth = newDepth;
 	childParams.Length = branchLength;
-	childParams.Origin = params.Origin + branchDir * params.DrawScale;
+	childParams.Origin = params.Origin + (branchDir * params.DrawScale);
 	childParams.Colour = branchColour;
 	childParams.Angle = params.Angle + branchAngle;
 	childParams.vertexOffset = params.vertexOffset + vCount;
@@ -100,20 +102,13 @@ int MorphRender::_drawRecursive( MorphDNA& dna, RecursionParams& params, MorphVe
 	return iCount;
 }
 
-void MorphRender::DrawBiomorph( MorphDNA& dna )
+void MorphRender::CalculateBounds( MorphDNA& dna, D3DXVECTOR2& min, D3DXVECTOR2& max )
 {
-	if( m_verticesWritten > kMaxVertices || m_indicesWritten > kMaxIndices )
-	{
-		printf("Drawing too many verts/indices\n");
-		return ;
-	}
-
-	MorphVertex* v = NULL;
-	unsigned int* i = NULL;
+	SCOPED_PROFILE(CalculateMorphBounds);
 
 	// first calculate the overal bounds
 	RecursionParams baseParams;
-	baseParams.vertexOffset = m_verticesWritten;
+	baseParams.vertexOffset = 0;
 	baseParams.branchDepth = BASEDEPTH(dna);
 	baseParams.Angle = 0;						// Start straight up
 	baseParams.Length = BASELENGTH(dna);
@@ -121,17 +116,42 @@ void MorphRender::DrawBiomorph( MorphDNA& dna )
 	baseParams.Colour = BASECOLOUR(dna);
 	baseParams.BoundsMin = D3DXVECTOR2(1.0f,1.0f);
 	baseParams.BoundsMax = D3DXVECTOR2(0.0f,0.0f);
-	baseParams.DrawScale = 1.0f;
 	baseParams.Draw = false;
+	baseParams.DrawScale = 1.0f;
+
+	MorphVertex* v = NULL;
+	unsigned int* i = NULL;
 	_drawRecursive( dna, baseParams, v, i );
 
-	// now draw, rescaling using the bounds
-	D3DXVECTOR2 dimensions(baseParams.BoundsMax.x - baseParams.BoundsMin.x,baseParams.BoundsMax.y - baseParams.BoundsMin.y);
-	baseParams.DrawScale = 8.0f / Bounds::Max(dimensions.x, dimensions.y);
+	min = baseParams.BoundsMin;
+	max = baseParams.BoundsMax;
+}
 
-	v = m_lockedVBData + m_verticesWritten;
-	i = m_lockedIBData + m_indicesWritten;
+void MorphRender::DrawBiomorph( MorphDNA& dna, D3DXVECTOR2 offset, float size )
+{
+	SCOPED_PROFILE(DrawLastBiomorph);
+
+	if( m_verticesWritten > kMaxVertices || m_indicesWritten > kMaxIndices )
+	{
+		printf("Drawing too many verts/indices\n");
+		return ;
+	}
+
+	// build render parameters
+	RecursionParams baseParams;
+	_buildRenderParameters( dna, baseParams );
+
+	// first calculate the overal bounds
+	CalculateBounds( dna, baseParams.BoundsMin, baseParams.BoundsMax );
+
+	// now draw, rescaling using the bounds
+	D3DXVECTOR2 dimensions = (baseParams.BoundsMax - baseParams.BoundsMin);
+	baseParams.DrawScale = size / Bounds::Max( dimensions.x, dimensions.y );
+	baseParams.Origin = offset;
 	baseParams.Draw = true;
+
+	MorphVertex* v = m_lockedVBData + m_verticesWritten;
+	unsigned int* i = m_lockedIBData + m_indicesWritten;	
 	int indexCount = _drawRecursive( dna, baseParams, v, i );
 	m_verticesWritten += (indexCount / 6) * 4;
 	m_indicesWritten += indexCount;
@@ -146,8 +166,10 @@ void MorphRender::StartRendering()
 	m_verticesWritten = m_indicesWritten = 0;
 }
 
-void MorphRender::EndRendering(D3DXVECTOR4 posScale)
+void MorphRender::EndRendering()
 {
+	SCOPED_PROFILE(FlushMorphsToDevice);
+
 	// Unlock the vb and ib ready to draw
 	m_device->UnlockVB(m_vb);
 	m_device->UnlockIB(m_ib);
@@ -178,10 +200,6 @@ void MorphRender::EndRendering(D3DXVECTOR4 posScale)
 
 	m_device->SetIndexBuffer(m_ib);
 	m_device->SetVertexBuffer(0, m_vb);
-
-	VectorConstant posScaleConstant = t.GetVectorConstant("PositionScale");
-	posScaleConstant.Set(posScale);
-	posScaleConstant.Apply();
 
 	DrawIndexedParameters dp;
 	dp.m_indexCount = m_indicesWritten;

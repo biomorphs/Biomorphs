@@ -45,64 +45,65 @@ void Biomorphs::_resetDNA()
 
 void Biomorphs::_render(Timer& timer)
 {
-	PROFILER_RESET();
-
-	float aspect = (float)m_appConfig.m_windowWidth / (float)m_appConfig.m_windowHeight;
-
-	// render the current generation to a texture
 	{
-		SCOPED_PROFILE(MorphGeneration,timer);
+		SCOPED_PROFILE(RenderAll);
 
-		D3DXVECTOR4 posScale( 0.0f, 0.0f, 0.1f, 0.1f );
-		m_morphRenderer.StartRendering();
-		m_morphRenderer.DrawBiomorph( m_testDNA );
-		m_morphRenderer.EndRendering( posScale );
-	}
+		float aspect = (float)m_appConfig.m_windowWidth / (float)m_appConfig.m_windowHeight;
 
-	{
-		SCOPED_PROFILE(RenderSprites,timer);
+		// render the current generation to a texture
+		{
+			SCOPED_PROFILE(MorphGeneration);
 
-		// switch back to rendering to back buffer
-		Rendertarget& backBuffer = m_device.GetBackBuffer();
-		DepthStencilBuffer& depthBuffer = m_device.GetDepthStencilBuffer();
-		m_device.SetRenderTargets( &backBuffer, &depthBuffer );
+			m_morphRenderer.StartRendering();
+			m_morphRenderer.DrawBiomorph( m_testDNA );
+			m_morphRenderer.EndRendering( );
+		}
 
-		// Set the viewport
-		Viewport vp;
-		vp.topLeft = Vector2(0,0);
-		vp.depthRange = Vector2f(0.0f,1.0f);
-		vp.dimensions = Vector2(m_appConfig.m_windowWidth, m_appConfig.m_windowHeight);
-		m_device.SetViewport( vp );
+		{
+			SCOPED_PROFILE(RenderScreen);
 
-		// Clear buffers
-		static float clearColour[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-		m_device.ClearTarget( backBuffer, clearColour );
-		m_device.ClearTarget( depthBuffer, 1.0f, 0 );
+			// switch back to rendering to back buffer
+			Rendertarget& backBuffer = m_device.GetBackBuffer();
+			DepthStencilBuffer& depthBuffer = m_device.GetDepthStencilBuffer();
+			m_device.SetRenderTargets( &backBuffer, &depthBuffer );
 
-		// draw the biomorph as a sprite
-		Texture2D& morphTexture = m_morphRenderer.CopyOutputTexture(m_spriteRender.GetTexture());
-		m_spriteRender.GetTexture() = morphTexture;
+			// Set the viewport
+			Viewport vp;
+			vp.topLeft = Vector2(0,0);
+			vp.depthRange = Vector2f(0.0f,1.0f);
+			vp.dimensions = Vector2(m_appConfig.m_windowWidth, m_appConfig.m_windowHeight);
+			m_device.SetViewport( vp );
+
+			// Clear buffers
+			static float clearColour[4] = {0.05f, 0.15f, 0.25f, 1.0f};
+			m_device.ClearTarget( backBuffer, clearColour );
+			m_device.ClearTarget( depthBuffer, 1.0f, 0 );
+
+			// draw the biomorph as a sprite
+			Texture2D& morphTexture = m_morphRenderer.CopyOutputTexture(m_spriteRender.GetTexture());
+			m_spriteRender.GetTexture() = morphTexture;
 		 
-		m_spriteRender.RemoveSprites();
-		m_spriteRender.AddSprite( 0, D3DXVECTOR2(-0.7f,-0.7f), D3DXVECTOR2(1.4f,1.4f) );
-		float scale = 0.6f;
-		m_spriteRender.Draw( m_device, D3DXVECTOR2(0.0f,0.0f), D3DXVECTOR2(scale,scale*aspect), "Render" );
-	}
+			m_spriteRender.RemoveSprites();
+			m_spriteRender.AddSprite( 0, D3DXVECTOR2(-0.7f,-0.7f), D3DXVECTOR2(1.4f,1.4f) );
+			float scale = 0.6f;
+			m_spriteRender.Draw( m_device, D3DXVECTOR2(0.0f,0.0f), D3DXVECTOR2(scale,scale*aspect), "Render" );
+		}
 
-	{
-		SCOPED_PROFILE(RenderBloom,timer);
+		{
+			SCOPED_PROFILE(RenderBloom);
 		
-		//now render the bloom from the backbuffer
-		static BloomRender::DrawParameters dp( 0.2f, 1.0f,
-											   0.0f, 0.0f,
-											   0.8f, 0.7f );
-		m_bloom.Render(dp);
+			//now render the bloom from the backbuffer
+			static BloomRender::DrawParameters dp( 0.2f, 1.0f,
+												   0.0f, 0.0f,
+												   0.8f, 0.7f );
+			m_bloom.Render(dp);
+		}
 	}
 
 	char textOut[256] = {'\0'};
 	Font::DrawParameters dp;
 	const float textColour[] = {1.0f,1.0f,1.0f,1.0f};
-	Vector2 textPos( 16, m_appConfig.m_windowHeight - 160 );
+	Vector2 textPos( 16, m_appConfig.m_windowHeight - 350 );
 	memcpy( dp.mColour, textColour, sizeof(textColour) );
 
 	// render profiler data

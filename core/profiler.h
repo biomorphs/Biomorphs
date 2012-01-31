@@ -7,7 +7,7 @@
 
 #define PROFILER_RESET() ProfilerSingleton::it()->Reset()
 #define PROFILER_CLEANUP() ProfilerSingleton::it()->Cleanup()
-#define SCOPED_PROFILE(Name,Timer) ScopedProfiler Name_profile(#Name,Timer)
+#define SCOPED_PROFILE(Name) ScopedProfiler Name_profile(#Name)
 #define PROFILER_ITERATE_DATA(ItName) for( ProfilerSingleton::ProfileDataMap::iterator ItName = ProfilerSingleton::it()->begin(); \
 											ItName != ProfilerSingleton::it()->end();	\
 											++ItName )
@@ -17,6 +17,7 @@ class IProfilerSet
 {
 public:
 	virtual void SetProfileData( const char* name, float timeStamp, int stackMod ) = 0;
+	virtual Timer& GetTimer() = 0;
 };
 
 class ProfilerSingleton : public IProfilerSet
@@ -68,12 +69,17 @@ public:
 
 private:
 	inline virtual void SetProfileData( const char* name, float timeStamp, int stackMod );
+	virtual Timer& GetTimer(){
+		return m_timer;
+	}
 
 	ProfilerSingleton()
 	{
+		m_timer.reset();
 	}
 
 	ProfileDataMap m_profileData;
+	Timer m_timer;
 	static ProfilerSingleton* s_it;
 };
 
@@ -107,25 +113,21 @@ inline void ProfilerSingleton::Reset()
 class ScopedProfiler
 {
 public:
-	ScopedProfiler(const char* name, Timer& t)
+	ScopedProfiler(const char* name)
 		: mName(name)
-		, mTimer(t)
 	{
-		float timeStamp = t.getSystemTime();
-
 		ProfilerSingleton* ps = ProfilerSingleton::it();
+		float timeStamp = ((IProfilerSet*)ps)->GetTimer().getSystemTime();
 		((IProfilerSet*)ps)->SetProfileData( name, timeStamp, 1 );
 	};
 	~ScopedProfiler()
 	{
-		float timeStamp = mTimer.getSystemTime();
-
 		ProfilerSingleton* ps = ProfilerSingleton::it();
+		float timeStamp = ((IProfilerSet*)ps)->GetTimer().getSystemTime();
 		((IProfilerSet*)ps)->SetProfileData( mName, timeStamp, -1 );
 	}
 private:
 	const char* mName;
-	Timer& mTimer;
 };
 
 #endif

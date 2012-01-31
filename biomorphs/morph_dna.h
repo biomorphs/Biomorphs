@@ -184,7 +184,7 @@ inline void MutateDNA( MorphDNA& dna )
 	switch(gene)
 	{
 	case 0:
-		dna.mBranchDepth = MutateGene( dna.mBranchDepth, dir, 1, 15 );
+		dna.mBranchDepth = MutateGene( dna.mBranchDepth, dir, 1, 12 );
 		break;
 	case 1:
 		dna.mBranchInitialAngle = MutateGene( dna.mBranchInitialAngle, dir * 2, 1, 127 );

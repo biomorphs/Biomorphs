@@ -1,5 +1,6 @@
 #include "bloom_render.h"
 #include "framework\graphics\device.h"
+#include "core\profiler.h"
 
 void BloomRender::CombineTargets( BloomRT& fullTarget, BloomRT& tinyBlur, BloomRT& quarterBlur, BloomRT& halfBlurr, const DrawParameters& p )
 {
@@ -89,31 +90,48 @@ void BloomRender::RenderTargetToTarget( BloomRT& src, BloomRT& dst, const char* 
 
 void BloomRender::Render(const DrawParameters& p)
 {
-	Texture2D backBufferTexture = m_device->GetBackBufferTexture();
+	{
+		SCOPED_PROFILE(BloomCopyBackbuffer);
+		Texture2D backBufferTexture = m_device->GetBackBufferTexture();
 	
-	// first grab the back buffer to our fullscreen texture
-	m_device->CopyTextureToTexture(backBufferTexture, m_fullscreen.mTexture);
+		// first grab the back buffer to our fullscreen texture
+		m_device->CopyTextureToTexture(backBufferTexture, m_fullscreen.mTexture);
+	}
 
-	// downsample the full res to half res
-	RenderTargetToTarget(m_fullscreen, m_halfRes, "Downsample");
+	{
+		SCOPED_PROFILE(BloomDownsample);
 
-	// downsample again to 1/4 res
-	RenderTargetToTarget(m_halfRes, m_quarterRes, "Downsample");
+		// downsample the full res to half res
+		RenderTargetToTarget(m_fullscreen, m_halfRes, "Downsample");
 
-	// .. and again
-	RenderTargetToTarget(m_quarterRes, m_tiny, "Downsample");
+		// downsample again to 1/4 res
+		RenderTargetToTarget(m_halfRes, m_quarterRes, "Downsample");
 
-	// 2 pass blur on half
-	RenderTargetToTarget(m_halfRes, m_halfBlur, "BlurH");
-	RenderTargetToTarget(m_halfBlur, m_halfRes, "BlurV");
+		// .. and again
+		RenderTargetToTarget(m_quarterRes, m_tiny, "Downsample");
+	}
 
-	// 2 pass blur on quarter
-	RenderTargetToTarget(m_quarterRes, m_quarterBlur, "BlurH");
-	RenderTargetToTarget(m_quarterBlur, m_quarterRes, "BlurV");
+	{
+		SCOPED_PROFILE(BloomBlurHalf);
+		// 2 pass blur on half
+		RenderTargetToTarget(m_halfRes, m_halfBlur, "BlurH");
+		RenderTargetToTarget(m_halfBlur, m_halfRes, "BlurV");
+	}
 
-	// 2 pass blur on tiny
-	RenderTargetToTarget(m_tiny, m_tinyBlur, "BlurH");
-	RenderTargetToTarget(m_tinyBlur, m_tiny, "BlurV");
+	{
+		SCOPED_PROFILE(BloomBlurQuarter);
+		// 2 pass blur on quarter
+		RenderTargetToTarget(m_quarterRes, m_quarterBlur, "BlurH");
+		RenderTargetToTarget(m_quarterBlur, m_quarterRes, "BlurV");
+	}
+
+	{
+
+		SCOPED_PROFILE(BloomBlurTiny);
+		// 2 pass blur on tiny
+		RenderTargetToTarget(m_tiny, m_tinyBlur, "BlurH");
+		RenderTargetToTarget(m_tinyBlur, m_tiny, "BlurV");
+	}
 
 	// final combine back to back buffer
 	CombineTargets( m_fullscreen, m_tiny, m_quarterBlur, m_halfBlur, p );
