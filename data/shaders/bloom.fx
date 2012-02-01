@@ -35,6 +35,7 @@ Texture2D BlitTexture;				// main texture
 Texture2D Tinyblur;					// tiny blur texture
 Texture2D Quarterblur;				// quarter blur texture
 Texture2D Halfblur;					// quarter blur texture
+Texture2D ExtraTinyBlur;			// extra tiny blur texture
 
 SamplerState sampleLinear
 {
@@ -48,6 +49,7 @@ SamplerState sampleLinear
 
 float4 PositionScale;
 float2 PixelSize;
+float2 ExtraTinyBloomConsts;	// x = threshold, y = mul
 float2 TinyBloomConsts;	// x = threshold, y = mul
 float2 QuarterBloomConsts;	// x = threshold, y = mul
 float2 HalfBloomConsts;	// x = threshold, y = mul
@@ -69,32 +71,25 @@ PS_INPUT VS( VS_INPUT input )
 // Combine pass
 float4 PS_COMBINE( PS_INPUT input) : SV_Target
 {
-	float4 full = BlitTexture.Sample( sampleLinear, input.UV );
-	float4 tblr = Tinyblur.Sample( sampleLinear, input.UV );
-	float4 qblr = Quarterblur.Sample( sampleLinear, input.UV );
-	float4 hblr = Halfblur.Sample( sampleLinear, input.UV );
+	float3 full = BlitTexture.Sample( sampleLinear, input.UV );
+	float3 tblr = Tinyblur.Sample( sampleLinear, input.UV );
+	float3 qblr = Quarterblur.Sample( sampleLinear, input.UV );
+	float3 hblr = Halfblur.Sample( sampleLinear, input.UV );
+	float3 etblr = ExtraTinyBlur.Sample( sampleLinear, input.UV );
 
 	// now calculate the luminance from each blur level
-	float tinyLum = length(tblr.xyz);
-	float quarterlum = length(qblr.xyz);
-	float halflum = length(hblr.xyz);
+	float exTinyLum = dot( etblr, float3(0.3, 0.59, 0.11) );
+	float tinyLum = dot( tblr, float3(0.3, 0.59, 0.11) );
+	float quarterlum = dot( qblr, float3(0.3, 0.59, 0.11) );
+	float halflum = dot( hblr, float3(0.3, 0.59, 0.11) );
 
-	// threshold + multiply final values
-	float tr = max(tinyLum - TinyBloomConsts.x,0.0f) * ( 1.0f / (1.0f - TinyBloomConsts.x) );
-	float qr = max(quarterlum - QuarterBloomConsts.x,0.0f) * ( 1.0f / (1.0f - QuarterBloomConsts.x) );
-	float hr = max(halflum - HalfBloomConsts.x,0.0f) * ( 1.0f / (1.0f - HalfBloomConsts.x) );
+	// threshold + scale using smoothstep
+	float ety = smoothstep( ExtraTinyBloomConsts.x, 1.0f, exTinyLum ) * ExtraTinyBloomConsts.y;
+	float ty = smoothstep( TinyBloomConsts.x, 1.0f, tinyLum ) * TinyBloomConsts.y;
+	float qy = smoothstep( QuarterBloomConsts.x, 1.0f, quarterlum ) * QuarterBloomConsts.y;
+	float hy = smoothstep( HalfBloomConsts.x, 1.0f, halflum ) * HalfBloomConsts.y;
 
-	// now scale the luminances logarithmicly
-	// log10(0.1) = -1, log10(10) = 1
-	float lty = (1.0f + log10(0.1f + (9.0f * tr))) / 2.0f;
-	float qty = (1.0f + log10(0.1f + (9.0f * qr))) / 2.0f;
-	float hty = (1.0f + log10(0.1f + (9.0f * hr))) / 2.0f;
-
-	return float4(full.xyz + 
-				 (lty * tblr * TinyBloomConsts.y) + 
-				 (qty * qblr * QuarterBloomConsts.y) + 
-				 (hty * hblr * HalfBloomConsts.y), 
-				 1.0f);
+	return float4( full + (ety * etblr) + (ty * tblr) + (qy * qblr) + (hy * hblr), 1.0f );
 }
 
 technique10 Combine
@@ -113,11 +108,13 @@ technique10 Combine
 // Downsample pass (needs some work)
 float4 PS_DS( PS_INPUT input) : SV_Target
 {
+	const float2 halfPixelSize = PixelSize * 0.5f;
+
 	// do a tiny 4 tap blur to help with aliasing
-	float4 s0 = BlitTexture.Sample( sampleLinear, input.UV + float2(-PixelSize.x,PixelSize.y) );
-	float4 s1 = BlitTexture.Sample( sampleLinear, input.UV + float2( PixelSize.x,PixelSize.y) );
-	float4 s2 = BlitTexture.Sample( sampleLinear, input.UV + float2(-PixelSize.x,-PixelSize.y) );
-	float4 s3 = BlitTexture.Sample( sampleLinear, input.UV + float2( PixelSize.x,-PixelSize.y) );
+	float4 s0 = BlitTexture.Sample( sampleLinear, input.UV + float2(-halfPixelSize.x,halfPixelSize.y) );
+	float4 s1 = BlitTexture.Sample( sampleLinear, input.UV + float2( halfPixelSize.x,halfPixelSize.y) );
+	float4 s2 = BlitTexture.Sample( sampleLinear, input.UV + float2(-halfPixelSize.x,-halfPixelSize.y) );
+	float4 s3 = BlitTexture.Sample( sampleLinear, input.UV + float2( halfPixelSize.x,-halfPixelSize.y) );
 
 	return ( (s0 + s1 + s2 + s3) / 4.0f );
 }
@@ -133,6 +130,29 @@ technique10 Downsample
         SetPixelShader( CompileShader( ps_4_0, PS_DS() ) );
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////
+// Debug pass
+float4 PS_DBG( PS_INPUT input) : SV_Target
+{
+	// do a tiny 4 tap blur to help with aliasing
+	float4 s0 = BlitTexture.Sample( sampleLinear, input.UV );
+
+	return s0;
+}
+
+technique10 Debug
+{
+    pass P0
+    {
+		SetBlendState(SrcAlphaBlendingOff, float4( 0.0f, 0.0f, 0.0f, 0.0f ), 0xFFFFFFFF );
+		SetDepthStencilState(ds, 0);
+        SetVertexShader( CompileShader( vs_4_0, VS() ) );
+        SetGeometryShader( NULL );
+        SetPixelShader( CompileShader( ps_4_0, PS_DBG() ) );
+    }
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////

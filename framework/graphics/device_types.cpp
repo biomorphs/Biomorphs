@@ -22,10 +22,14 @@ TextureSampler EffectTechnique::GetSamplerByName(const char* name)
 	TextureSampler result;
 
 	ID3D10EffectVariable* var = m_parent->m_effect->GetVariableByName(name);
-	if( var )
+	if( var && var->IsValid() )
 	{
 		result.m_sampler = var->AsShaderResource();
 		result.m_effect = this;
+	}
+	else
+	{
+		printf("Unknown shader sampler '%s\n", name);
 	}
 
 	return result;
@@ -89,6 +93,10 @@ void TextureSampler::Set(Texture2D& t)
 {
 	if( m_sampler && t.IsValid() )
 	{
-		m_sampler->SetResource( t.m_shaderResource );
+		HRESULT hr = (m_sampler->SetResource( t.m_shaderResource ));
+		if( FAILED(hr) )
+		{
+			printf("Bah");
+		}
 	}
 }

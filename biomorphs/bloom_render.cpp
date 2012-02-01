@@ -2,7 +2,7 @@
 #include "framework\graphics\device.h"
 #include "core\profiler.h"
 
-void BloomRender::CombineTargets( BloomRT& fullTarget, BloomRT& tinyBlur, BloomRT& quarterBlur, BloomRT& halfBlurr, const DrawParameters& p )
+void BloomRender::CombineTargets( const DrawParameters& p )
 {
 	m_device->ResetShaderState();	// flush currently bound rt
 	m_device->SetRenderTargets( &m_device->GetBackBuffer(), &m_device->GetDepthStencilBuffer() );
@@ -26,17 +26,23 @@ void BloomRender::CombineTargets( BloomRT& fullTarget, BloomRT& tinyBlur, BloomR
 	EffectTechnique t = m_effect.GetTechniqueByName("Combine");
 
 	TextureSampler tinyblur = t.GetSamplerByName("Tinyblur");
-	tinyblur.Set( tinyBlur.mTexture );
+	tinyblur.Set( m_tiny.mTexture );
+
+	TextureSampler extb = t.GetSamplerByName("ExtraTinyBlur");
+	extb.Set( m_extraTiny.mTexture );
 
 	TextureSampler quarterblur = t.GetSamplerByName("Quarterblur");
-	quarterblur.Set( quarterBlur.mTexture );
+	quarterblur.Set( m_quarterRes.mTexture );
 
 	TextureSampler halfblur = t.GetSamplerByName("Halfblur");
-	halfblur.Set( halfBlurr.mTexture );
+	halfblur.Set( m_halfRes.mTexture );
 
 	// set the bloom constants
 	VectorConstant ps = t.GetVectorConstant("TinyBloomConsts");
 	ps.Set(p.TinyBlurConsts);	ps.Apply();
+
+	ps = t.GetVectorConstant("ExtraTinyBloomConsts");
+	ps.Set(p.ExtraTinyBlurConsts);	ps.Apply();
 
 	ps = t.GetVectorConstant("QuarterBloomConsts");
 	ps.Set(p.QuarterBlurConsts);	ps.Apply();
@@ -83,9 +89,37 @@ void BloomRender::RenderTargetToTarget( BloomRT& src, BloomRT& dst, const char* 
 	m_spriteRender.RemoveSprites();
 	m_spriteRender.AddSprite( 0, D3DXVECTOR2(-1.0f,-1.0f), D3DXVECTOR2(2.0f,2.0f) );
 
-	float aspect = (float)dst.mTexture.GetParameters().width / (float)dst.mTexture.GetParameters().width;
 	float scale = 1.0f;
-	m_spriteRender.Draw( *m_device, D3DXVECTOR2(0.0f,0.0f), D3DXVECTOR2(scale,scale*aspect), technique );
+	m_spriteRender.Draw( *m_device, D3DXVECTOR2(0.0f,0.0f), D3DXVECTOR2(scale,scale), technique );
+}
+
+void BloomRender::DebugTarget( BloomRT& source )
+{
+	m_device->ResetShaderState();	// flush currently bound rt
+	m_device->SetRenderTargets( &m_device->GetBackBuffer(), &m_device->GetDepthStencilBuffer() );
+
+	// Set the viewport
+	Viewport vp;
+	vp.topLeft = Vector2(0,0);
+	vp.depthRange = Vector2f(0.0f,1.0f);
+	vp.dimensions = Vector2(m_device->GetBackBufferTexture().GetParameters().width,
+							m_device->GetBackBufferTexture().GetParameters().height);
+	m_device->SetViewport( vp );
+
+	// clear all colour to 0
+	static float clearColour[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+	m_device->ClearTarget( m_device->GetBackBuffer(), clearColour );
+
+	// Clear depth/stencil
+	m_device->ClearTarget( m_device->GetDepthStencilBuffer(), 1.0f, 0 );
+
+	// render to the target using the sprite renderer
+	m_spriteRender.GetTexture() = source.mTexture;	// use the source rt as a texture
+	m_spriteRender.RemoveSprites();
+	m_spriteRender.AddSprite( 0, D3DXVECTOR2(-1.0f,-1.0f), D3DXVECTOR2(2.0f,2.0f) );
+
+	float scale = 1.0f;
+	m_spriteRender.Draw( *m_device, D3DXVECTOR2(0.0f,0.0f), D3DXVECTOR2(scale,scale), "Debug" );
 }
 
 void BloomRender::Render(const DrawParameters& p)
@@ -109,6 +143,9 @@ void BloomRender::Render(const DrawParameters& p)
 
 		// .. and again
 		RenderTargetToTarget(m_quarterRes, m_tiny, "Downsample");
+
+		// extra tiny
+		RenderTargetToTarget( m_tiny, m_extraTiny, "Downsample");
 	}
 
 	{
@@ -133,8 +170,16 @@ void BloomRender::Render(const DrawParameters& p)
 		RenderTargetToTarget(m_tinyBlur, m_tiny, "BlurV");
 	}
 
+	{
+
+		SCOPED_PROFILE(BloomBlurExtraTiny);
+		// 2 pass blur on tiny
+		RenderTargetToTarget(m_extraTiny, m_extraTinyBlur, "BlurH");
+		RenderTargetToTarget(m_extraTinyBlur, m_extraTiny, "BlurV");
+	}
+
 	// final combine back to back buffer
-	CombineTargets( m_fullscreen, m_tiny, m_quarterBlur, m_halfBlur, p );
+	CombineTargets( p );
 }
 
 Texture2D BloomRender::CreateRTTexture(int width, int height, Texture2D::TextureFormat format)
@@ -199,10 +244,12 @@ void BloomRender::Create(Device* d, Parameters& p)
 	m_halfRes = CreateRenderTarget( p.mWidth / 2, p.mHeight / 2, Texture2D::TypeFloat32 );
 	m_quarterRes = CreateRenderTarget( p.mWidth / 4, p.mHeight / 4, Texture2D::TypeFloat32 );
 	m_tiny = CreateRenderTarget( p.mWidth / 8, p.mHeight / 8, Texture2D::TypeFloat32 );
+	m_extraTiny = CreateRenderTarget( p.mWidth / 16, p.mHeight / 16, Texture2D::TypeFloat32 );
 	
 	m_halfBlur = CreateRenderTarget( p.mWidth / 2, p.mHeight / 2, Texture2D::TypeFloat32 );
 	m_quarterBlur = CreateRenderTarget( p.mWidth / 4, p.mHeight / 4, Texture2D::TypeFloat32 );
 	m_tinyBlur = CreateRenderTarget( p.mWidth / 8, p.mHeight / 8, Texture2D::TypeFloat32 );
+	m_extraTinyBlur = CreateRenderTarget( p.mWidth / 16, p.mHeight / 16, Texture2D::TypeFloat32 );
 
 	// create sprite renderer
 	SpriteRender::Parameters sp;
@@ -216,10 +263,12 @@ void BloomRender::Release()
 {
 	m_spriteRender.Release(*m_device);
 
+	Release( m_extraTinyBlur );
 	Release( m_tinyBlur );
 	Release( m_quarterBlur );
 	Release( m_halfBlur );
 
+	Release( m_extraTiny );
 	Release( m_tiny );
 	Release( m_quarterRes );
 	Release( m_halfRes );

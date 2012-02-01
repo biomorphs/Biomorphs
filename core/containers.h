@@ -2,6 +2,7 @@
 #define CONTAINERS_H_INCLUDED
 
 #include <map>
+#include <list>
 #include <vector>
 
 #define DEFINE_PAIR(name,keyType, dataType)	typedef std::pair<keyType,dataType> name;

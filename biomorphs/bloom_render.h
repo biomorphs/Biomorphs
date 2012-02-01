@@ -16,15 +16,18 @@ public:
 
 	struct DrawParameters
 	{
-		DrawParameters(float tinyThresh=0.0f, float tinyMul=0.0f,
+		DrawParameters(float extraTinyThres=0.0f, float extraTinyMul = 0.0f,
+					   float tinyThresh=0.0f, float tinyMul=0.0f,
 					   float quarterThresh=0.0f, float quarterMul=0.0f,
 					   float halfThresh=0.0f, float halfMul=0.0f)
 					   : TinyBlurConsts(tinyThresh, tinyMul,0.0f,0.0f)
 					   , QuarterBlurConsts(quarterThresh, quarterMul,0.0f,0.0f)
 					   , HalfBlurConsts(halfThresh, halfMul,0.0f,0.0f)
+					   , ExtraTinyBlurConsts(extraTinyThres, extraTinyMul, 0.0f,0.0f)
 		{
 		}
 
+		D3DXVECTOR4 ExtraTinyBlurConsts;
 		D3DXVECTOR4 TinyBlurConsts;
 		D3DXVECTOR4 QuarterBlurConsts;
 		D3DXVECTOR4 HalfBlurConsts;
@@ -43,7 +46,8 @@ private:
 		DepthStencilBuffer mDSB;
 	};
 
-	void CombineTargets( BloomRT& fullTarget, BloomRT& tinyBlur, BloomRT& quarterBlur, BloomRT& halfBlur, const DrawParameters& p );
+	void DebugTarget( BloomRT& source );
+	void CombineTargets( const DrawParameters& p );
 	void RenderTargetToTarget( BloomRT& src, BloomRT& dst, const char* technique );
 
 	Texture2D CreateRTTexture(int width, int height, Texture2D::TextureFormat format);
@@ -62,10 +66,13 @@ private:
 	BloomRT m_halfRes;		// half res (quarter size) f32 target
 	BloomRT m_quarterRes;	// quarter res (1/16 size) f32 target
 	BloomRT m_tiny;			// 1 / 16 res f32 target
+	BloomRT m_extraTiny;
 
+	// working textures
+	BloomRT m_extraTinyBlur;
 	BloomRT m_tinyBlur;
 	BloomRT m_quarterBlur;
-	BloomRT m_halfBlur;
+	BloomRT m_halfBlur;;
 };
 
 #endif

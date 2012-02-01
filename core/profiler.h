@@ -8,7 +8,7 @@
 #define PROFILER_RESET() ProfilerSingleton::it()->Reset()
 #define PROFILER_CLEANUP() ProfilerSingleton::it()->Cleanup()
 #define SCOPED_PROFILE(Name) ScopedProfiler Name_profile(#Name)
-#define PROFILER_ITERATE_DATA(ItName) for( ProfilerSingleton::ProfileDataMap::iterator ItName = ProfilerSingleton::it()->begin(); \
+#define PROFILER_ITERATE_DATA(ItName) for( ProfilerSingleton::ProfileDataList::iterator ItName = ProfilerSingleton::it()->begin(); \
 											ItName != ProfilerSingleton::it()->end();	\
 											++ItName )
 #define PROFILER_TOTAL() ProfilerSingleton::it()->TotalData();
@@ -16,7 +16,7 @@
 class IProfilerSet
 {
 public:
-	virtual void SetProfileData( const char* name, float timeStamp, int stackMod ) = 0;
+	virtual int SetProfileData( const char* name, float timeStamp, int id=0 ) = 0;
 	virtual Timer& GetTimer() = 0;
 };
 
@@ -44,21 +44,22 @@ public:
 	struct ProfileData
 	{
 		ProfileData()
-			: mStackCount(0)
+			: mID(0)
 		{
 		}
 		float mTimeDiff;
 		float mTimestamp;
+		int mID;
+		int mStackLevel;
 		std::string mName;
-		int mStackCount;
 	};
-	DEFINE_MAP(ProfileDataMap, StringHashing::StringHash, ProfileData);
+	DEFINE_LIST(ProfileDataList, ProfileData);
 
-	ProfileDataMap::iterator begin()
+	ProfileDataList::iterator begin()
 	{
 		return m_profileData.begin();
 	}
-	ProfileDataMap::iterator end()
+	ProfileDataList::iterator end()
 	{
 		return m_profileData.end();
 	}
@@ -68,7 +69,7 @@ public:
 	}
 
 private:
-	inline virtual void SetProfileData( const char* name, float timeStamp, int stackMod );
+	inline virtual int SetProfileData( const char* name, float timeStamp, int id );
 	virtual Timer& GetTimer(){
 		return m_timer;
 	}
@@ -76,38 +77,57 @@ private:
 	ProfilerSingleton()
 	{
 		m_timer.reset();
+		m_firstID = 1;
+		m_stackLevel = 0;
 	}
 
-	ProfileDataMap m_profileData;
+	ProfileDataList m_profileData;
 	Timer m_timer;
+	int m_firstID;
+	int m_stackLevel;
 	static ProfilerSingleton* s_it;
 };
 
-inline void ProfilerSingleton::SetProfileData( const char* name, float timeStamp, int stackMod )
+inline int ProfilerSingleton::SetProfileData( const char* name, float timeStamp, int id )
 {
-	ProfileDataMap::iterator it = m_profileData.find( StringHashing::getHash(name) );
-	if( it == m_profileData.end() )
+	if( id != 0 )
 	{
-		ProfileData newPd;
-		newPd.mName = name;
-		newPd.mStackCount=1;
-		newPd.mTimestamp = timeStamp;
-		newPd.mTimeDiff = timeStamp;
-		m_profileData.insert( std::pair<StringHashing::StringHash, ProfileData>( StringHashing::getHash(name),
-																				 newPd ) );
+		for( ProfileDataList::iterator it = m_profileData.begin();
+			it != m_profileData.end();
+			++it )
+		{
+			if((*it).mID == id )
+			{
+				(*it).mTimeDiff = timeStamp - (*it).mTimestamp;
+				m_stackLevel--;
+				return id;
+			}
+		}
 	}
 	else
 	{
-		(*it).second.mTimeDiff = timeStamp - (*it).second.mTimestamp;
-		(*it).second.mStackCount += stackMod;
-		(*it).second.mTimestamp = timeStamp;
+		ProfileDataList::iterator it = m_profileData.begin();
 
+		ProfileData newPd;
+		newPd.mName = name;
+		newPd.mID = m_firstID++;
+		newPd.mTimestamp = timeStamp;
+		newPd.mTimeDiff = timeStamp;
+		newPd.mStackLevel = m_stackLevel++;
+
+		m_profileData.push_back( newPd );
+
+		return newPd.mID;
 	}
+
+	return -1;
 }
 
 inline void ProfilerSingleton::Reset()
 {
 	m_profileData.clear();
+	m_firstID = 1;
+	m_stackLevel = 0;
 }
 
 class ScopedProfiler
@@ -118,15 +138,16 @@ public:
 	{
 		ProfilerSingleton* ps = ProfilerSingleton::it();
 		float timeStamp = ((IProfilerSet*)ps)->GetTimer().getSystemTime();
-		((IProfilerSet*)ps)->SetProfileData( name, timeStamp, 1 );
+		mID = ((IProfilerSet*)ps)->SetProfileData( name, timeStamp );
 	};
 	~ScopedProfiler()
 	{
 		ProfilerSingleton* ps = ProfilerSingleton::it();
 		float timeStamp = ((IProfilerSet*)ps)->GetTimer().getSystemTime();
-		((IProfilerSet*)ps)->SetProfileData( mName, timeStamp, -1 );
+		((IProfilerSet*)ps)->SetProfileData( mName, timeStamp, mID );
 	}
 private:
+	int mID;
 	const char* mName;
 };
 

@@ -93,9 +93,10 @@ void Biomorphs::_render(Timer& timer)
 			SCOPED_PROFILE(RenderBloom);
 		
 			//now render the bloom from the backbuffer
-			static BloomRender::DrawParameters dp( 0.2f, 1.0f,
-												   0.0f, 0.0f,
-												   0.8f, 0.7f );
+			static BloomRender::DrawParameters dp( 0.15f, 1.0f,
+												   0.2f, 1.0f,
+												   0.8f, 1.0f,
+												   0.6f, 1.0f );
 			m_bloom.Render(dp);
 		}
 	}
@@ -110,11 +111,16 @@ void Biomorphs::_render(Timer& timer)
 	dp.mJustification = Font::DRAW_LEFT;
 	PROFILER_ITERATE_DATA(ItName)
 	{
-		sprintf_s(textOut, "%s: %3.3fms\n", (*ItName).second.mName.c_str(), (*ItName).second.mTimeDiff * 1000.0f);
+		char* t = textOut;
+		for(int i=0;i<(*ItName).mStackLevel;++i)
+		{
+			*t++ = ' ';	*t++ = ' ';
+		}
+		_snprintf(t, textOut + sizeof(textOut) - t, "%s: %3.3fms\n", (*ItName).mName.c_str(), (*ItName).mTimeDiff * 1000.0f);
 		m_device.DrawText( textOut, m_font, dp, textPos );	textPos.y() = textPos.y() + 18;
 	}
 
-	textPos.y() = textPos.y() + 40;
+	textPos.y() = textPos.y() + 30;
 	sprintf_s(textOut, "Generation: %d", m_generation);
 	m_device.DrawText( textOut, m_font, dp, textPos );
 
@@ -185,6 +191,8 @@ bool Biomorphs::_initialise()
 
 bool Biomorphs::_update(Timer& timer)
 {
+	PROFILER_RESET();
+
 	static float evolutionTime = 0.02f; 
 	static float timeSinceEvolution = evolutionTime;
 
@@ -217,6 +225,8 @@ bool Biomorphs::update( Timer& timer )
 bool Biomorphs::shutdown()
 {
 	PROFILER_CLEANUP();
+
+	m_device.Flush();
 
 	m_bloom.Release();
 

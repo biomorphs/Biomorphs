@@ -129,7 +129,7 @@ void MorphRender::CalculateBounds( MorphDNA& dna, D3DXVECTOR2& min, D3DXVECTOR2&
 
 void MorphRender::DrawBiomorph( MorphDNA& dna, D3DXVECTOR2 offset, float size )
 {
-	SCOPED_PROFILE(DrawLastBiomorph);
+	SCOPED_PROFILE(DrawBiomorph);
 
 	if( m_verticesWritten > kMaxVertices || m_indicesWritten > kMaxIndices )
 	{
@@ -150,11 +150,14 @@ void MorphRender::DrawBiomorph( MorphDNA& dna, D3DXVECTOR2 offset, float size )
 	baseParams.Origin = offset;
 	baseParams.Draw = true;
 
-	MorphVertex* v = m_lockedVBData + m_verticesWritten;
-	unsigned int* i = m_lockedIBData + m_indicesWritten;	
-	int indexCount = _drawRecursive( dna, baseParams, v, i );
-	m_verticesWritten += (indexCount / 6) * 4;
-	m_indicesWritten += indexCount;
+	{
+		SCOPED_PROFILE(GenerateGeometry);
+		MorphVertex* v = m_lockedVBData + m_verticesWritten;
+		unsigned int* i = m_lockedIBData + m_indicesWritten;	
+		int indexCount = _drawRecursive( dna, baseParams, v, i );
+		m_verticesWritten += (indexCount / 6) * 4;
+		m_indicesWritten += indexCount;
+	}
 }
 
 void MorphRender::StartRendering()
@@ -168,8 +171,6 @@ void MorphRender::StartRendering()
 
 void MorphRender::EndRendering()
 {
-	SCOPED_PROFILE(FlushMorphsToDevice);
-
 	// Unlock the vb and ib ready to draw
 	m_device->UnlockVB(m_vb);
 	m_device->UnlockIB(m_ib);

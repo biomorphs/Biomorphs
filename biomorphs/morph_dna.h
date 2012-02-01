@@ -7,6 +7,8 @@
 
 typedef unsigned long long uint_64;
 
+#define MORPH_DNA_INLINE __forceinline
+
 // biomorph dna structure
 struct MorphDNA
 {
@@ -74,25 +76,25 @@ inline MorphDNA MAKEDNA(unsigned int branches,
 }
 
 // branch depth (num recursions)
-inline int BASEDEPTH(MorphDNA& dna)
+MORPH_DNA_INLINE int BASEDEPTH(const MorphDNA& dna)
 {
 	return 1 + dna.mBranchDepth;
 }
 
 // branch base angle
-inline float BASEANGLE(MorphDNA& dna)
+MORPH_DNA_INLINE float BASEANGLE(const MorphDNA& dna)
 {
 	return ((float)(dna.mBranchInitialAngle / 127.0f) * Angles::PI);
 }
 
 // branch base length 
-inline float BASELENGTH(MorphDNA& dna)
+MORPH_DNA_INLINE float BASELENGTH(const MorphDNA& dna)
 {
 	return (float)(dna.mBranchInitialLength / 63.0f);
 }
 
 // base colour
-inline D3DXVECTOR4 BASECOLOUR(MorphDNA& dna)
+MORPH_DNA_INLINE D3DXVECTOR4 BASECOLOUR(const MorphDNA& dna)
 {
 	float red = (float)dna.mBaseColourRed / 31.0f;
 	float green = (float)dna.mBaseColourGreen / 31.0f;
@@ -103,51 +105,51 @@ inline D3DXVECTOR4 BASECOLOUR(MorphDNA& dna)
 }
 
 // branch length modifier
-inline float BRANCHLENGTHMOD(MorphDNA& dna) 
+MORPH_DNA_INLINE float BRANCHLENGTHMOD(const MorphDNA& dna) 
 {
 	return (float)(dna.mBranchLengthModifier / 255.0f) * 2.0f;
 }
 
 // branch angle modifier
-inline float BRANCHANGLEMOD(MorphDNA& dna) 
+MORPH_DNA_INLINE float BRANCHANGLEMOD(const MorphDNA& dna) 
 {
 	return ((float)(dna.mBranchAngleModifier / 255.0f) * 2.0f);
 }
 
 // branch red modifier
-inline float BRANCHREDMOD(MorphDNA& dna) 
+MORPH_DNA_INLINE float BRANCHREDMOD(const MorphDNA& dna) 
 {
 	return ((float)(dna.mBranchRedModifier / 255.0f) * 2.0f);
 }
 
 // branch green modifier
-inline float BRANCHGREENMOD(MorphDNA& dna) 
+MORPH_DNA_INLINE float BRANCHGREENMOD(const MorphDNA& dna) 
 {
 	return ((float)(dna.mBranchGreenModifier / 255.0f) * 2.0f);
 }
 
 // branch blue modifier
-inline float BRANCHBLUEMOD(MorphDNA& dna) 
+MORPH_DNA_INLINE float BRANCHBLUEMOD(const MorphDNA& dna) 
 {
 	return ((float)(dna.mBranchBlueModifier / 255.0f) * 2.0f);
 }
 
 // branch length for a specific branch
-inline float BRANCHLENGTH(MorphDNA& dna, int depth )
+MORPH_DNA_INLINE float BRANCHLENGTH(const MorphDNA& dna, int depth )
 {
 	float mod = pow(BRANCHLENGTHMOD(dna), BASEDEPTH(dna) - depth);
 	return mod * BASELENGTH(dna);
 }
 
 // branch angle for a specific branch 
-inline float BRANCHANGLE(MorphDNA&dna, int depth)	
+MORPH_DNA_INLINE float BRANCHANGLE(const MorphDNA&dna, int depth)	
 {
 	float mod = pow(BRANCHANGLEMOD(dna), BASEDEPTH(dna) - depth);
 	return mod * BASEANGLE(dna);
 }
 
 // branch colour for a specific branch
-inline D3DXVECTOR4 BRANCHCOLOUR(MorphDNA&dna, int depth)	
+MORPH_DNA_INLINE D3DXVECTOR4 BRANCHCOLOUR(const MorphDNA&dna, int depth)	
 {
 	int d = BASEDEPTH(dna) - depth;
 
@@ -165,7 +167,7 @@ inline D3DXVECTOR4 BRANCHCOLOUR(MorphDNA&dna, int depth)
 	return D3DXVECTOR4( r, g, b, 1.0f );
 }
 
-inline int MutateGene(  int originalValue,
+MORPH_DNA_INLINE int MutateGene(  int originalValue,
 						int modification,
 						int valueMin,
 						int valueMax )
@@ -184,7 +186,7 @@ inline void MutateDNA( MorphDNA& dna )
 	switch(gene)
 	{
 	case 0:
-		dna.mBranchDepth = MutateGene( dna.mBranchDepth, dir, 1, 12 );
+		dna.mBranchDepth = MutateGene( dna.mBranchDepth, dir, 15, 15 );
 		break;
 	case 1:
 		dna.mBranchInitialAngle = MutateGene( dna.mBranchInitialAngle, dir * 2, 1, 127 );
@@ -199,13 +201,13 @@ inline void MutateDNA( MorphDNA& dna )
 		dna.mBranchAngleModifier = MutateGene( dna.mBranchAngleModifier, dir * 4, 1, 255 );
 		break;
 	case 5:
-		dna.mBaseColourRed = MutateGene( dna.mBaseColourRed, dir * 1, 1, 31 );
+		dna.mBaseColourRed = MutateGene( dna.mBaseColourRed, dir * 1, 31, 31 );
 		break;
 	case 6:
-		dna.mBaseColourGreen = MutateGene( dna.mBaseColourGreen, dir * 1, 1, 31 );
+		dna.mBaseColourGreen = MutateGene( dna.mBaseColourGreen, dir * 1, 31, 31 );
 		break;
 	case 7:
-		dna.mBaseColourBlue = MutateGene( dna.mBaseColourBlue, dir * 1, 1, 31 );
+		dna.mBaseColourBlue = MutateGene( dna.mBaseColourBlue, dir * 1, 31, 31 );
 		break;
 	case 8:
 		dna.mBranchRedModifier = MutateGene( dna.mBranchRedModifier, dir * 3, 1, 255 );

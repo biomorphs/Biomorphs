@@ -33,8 +33,6 @@ struct PS_INPUT
 	float4 Colour : COLOR;
 };
 
-float4 PositionScale;
-
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
@@ -42,7 +40,7 @@ PS_INPUT VS( VS_INPUT input )
 {
     PS_INPUT output = (PS_INPUT)0;
 
-	output.Pos = float4((input.Pos* PositionScale.zw) + PositionScale.xy,0.0,1.0);
+	output.Pos = float4(input.Pos, 0.0f, 1.0f);
 	output.Colour = input.Colour;
 
     return output;
