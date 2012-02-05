@@ -5,6 +5,7 @@
 #include "core/minmax.h"
 #include "core/random.h"
 #include "core/serialisation.h"
+#include <D3DX10math.h>
 
 typedef unsigned long long uint_64;
 
@@ -50,6 +51,24 @@ struct MorphDNA
 			uint_64 mFullSequence1; 
 		};
 	};
+
+	bool operator==(const MorphDNA& rhs)
+	{
+		return mFullSequence0 == rhs.mFullSequence0 && mFullSequence1 == rhs.mFullSequence1;
+	}
+
+	bool operator!=(const MorphDNA& rhs)
+	{
+		return !(*this == rhs);
+	}
+
+	StringHashing::StringHash GetHash() const
+	{
+		char hashString[256] = {'\0'};
+
+		sprintf( hashString, "%u%u%u%u", mFullSequenceHigh0, mFullSequenceLow0, mFullSequenceHigh1, mFullSequenceLow1 );
+		return StringHashing::getHash( hashString );
+	}
 };
 
 // dna serialisation
@@ -199,7 +218,7 @@ inline void MutateDNA( MorphDNA& dna )
 	switch(gene)
 	{
 	case 0:
-		dna.mBranchDepth = MutateGene( dna.mBranchDepth, dir, 1, 13 );
+		dna.mBranchDepth = MutateGene( dna.mBranchDepth, dir, 1, 12 );
 		break;
 	case 1:
 		dna.mBranchInitialAngle = MutateGene( dna.mBranchInitialAngle, dir * 2, 1, 127 );
@@ -214,13 +233,13 @@ inline void MutateDNA( MorphDNA& dna )
 		dna.mBranchAngleModifier = MutateGene( dna.mBranchAngleModifier, dir * 4, 1, 255 );
 		break;
 	case 5:
-		dna.mBaseColourRed = MutateGene( dna.mBaseColourRed, dir * 1, 31, 31 );
+		dna.mBaseColourRed = MutateGene( dna.mBaseColourRed, dir * 1, 1, 31 );
 		break;
 	case 6:
-		dna.mBaseColourGreen = MutateGene( dna.mBaseColourGreen, dir * 1, 31, 31 );
+		dna.mBaseColourGreen = MutateGene( dna.mBaseColourGreen, dir * 1, 1, 31 );
 		break;
 	case 7:
-		dna.mBaseColourBlue = MutateGene( dna.mBaseColourBlue, dir * 1, 31, 31 );
+		dna.mBaseColourBlue = MutateGene( dna.mBaseColourBlue, dir * 1, 1, 31 );
 		break;
 	case 8:
 		dna.mBranchRedModifier = MutateGene( dna.mBranchRedModifier, dir * 3, 1, 255 );

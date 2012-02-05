@@ -13,7 +13,7 @@ MorphRender::~MorphRender()
 Texture2D MorphRender::CopyOutputTexture(Texture2D& texture)
 {
 	SCOPED_PROFILE(CopyMorphTexture);
-	Texture2D resultTexture = texture;;
+	Texture2D resultTexture = texture;
 	if( !resultTexture.IsValid() )
 	{
 		// create a texture the same size as the output texture

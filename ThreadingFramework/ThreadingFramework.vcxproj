@@ -21,7 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\biomorphs\app.cpp" />
     <ClCompile Include="..\biomorphs\biomorphs.cpp" />
-    <ClCompile Include="..\biomorphs\biomorph_generator.cpp" />
+    <ClCompile Include="..\biomorphs\biomorph_manager.cpp" />
     <ClCompile Include="..\biomorphs\bloom_render.cpp" />
     <ClCompile Include="..\biomorphs\morph_render.cpp" />
     <ClCompile Include="..\core\config.cpp" />
@@ -51,8 +51,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\biomorphs\app.h" />
+    <ClInclude Include="..\biomorphs\biomorph.h" />
     <ClInclude Include="..\biomorphs\biomorphs.h" />
-    <ClInclude Include="..\biomorphs\biomorph_generator.h" />
+    <ClInclude Include="..\biomorphs\biomorph_manager.h" />
     <ClInclude Include="..\biomorphs\bloom_render.h" />
     <ClInclude Include="..\biomorphs\morph_dna.h" />
     <ClInclude Include="..\biomorphs\morph_render.h" />
@@ -104,7 +105,7 @@
     <ProjectGuid>{A4CA8127-E2EC-40AF-A7BB-98C28F635AB6}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>ThreadingFramework</RootNamespace>
-    <ProjectName>D3d</ProjectName>
+    <ProjectName>Biomorphs</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -116,7 +117,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>NotSet</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PlatformToolset>Windows7.1SDK</PlatformToolset>
@@ -141,24 +142,28 @@
     <ExecutablePath>$(DXSDK_DIR)Utilities\bin\x86;$(ExecutablePath)</ExecutablePath>
     <IncludePath>$(DXSDK_DIR)Include;$(IncludePath); C:\Program Files\Microsoft SDKs\Windows\v7.0A\Include\gl;$(SolutionDir)\external\;$(IncludePath)</IncludePath>
     <LibraryPath>$(DXSDK_DIR)Lib\x86;$(LibraryPath)</LibraryPath>
+    <TargetName>$(ProjectName)_x86</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <ExecutablePath>$(DXSDK_DIR)Utilities\bin\x86;$(ExecutablePath)</ExecutablePath>
     <IncludePath>$(DXSDK_DIR)Include;$(IncludePath); C:\Program Files\Microsoft SDKs\Windows\v7.0A\Include\gl;$(SolutionDir)\external\;$(IncludePath)</IncludePath>
     <LibraryPath>$(DXSDK_DIR)Lib\x86;$(LibraryPath)</LibraryPath>
+    <TargetName>$(ProjectName)_x86</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ExecutablePath>$(DXSDK_DIR)Utilities\bin\x64;$(ExecutablePath);$(VCInstallDir)bin\x86_amd64;$(VCInstallDir)bin;$(WindowsSdkDir)bin\NETFX 4.0 Tools;$(WindowsSdkDir)bin;$(VSInstallDir)Common7\Tools\bin;$(VSInstallDir)Common7\tools;$(VSInstallDir)Common7\ide;$(ProgramFiles)\HTML Help Workshop;$(FrameworkSDKDir)\bin;$(FrameworkSDKDir)\lib\win64;$(MSBuildToolsPath32);$(FxCopDir);$(PATH);</ExecutablePath>
     <IncludePath>$(DXSDK_DIR)Include;$(IncludePath); $(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
     <LibraryPath>$(DXSDK_DIR)Lib\x64;$(LibraryPath); $(VCInstallDir)lib\amd64;$(VCInstallDir)atlmfc\lib\amd64;$(WindowsSdkDir)lib\x64;</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>$(ProjectName)_x64</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ExecutablePath>$(DXSDK_DIR)Utilities\bin\x64;$(ExecutablePath);$(VCInstallDir)bin\x86_amd64;$(VCInstallDir)bin;$(WindowsSdkDir)bin\NETFX 4.0 Tools;$(WindowsSdkDir)bin;$(VSInstallDir)Common7\Tools\bin;$(VSInstallDir)Common7\tools;$(VSInstallDir)Common7\ide;$(ProgramFiles)\HTML Help Workshop;$(FrameworkSDKDir)\bin;$(FrameworkSDKDir)\lib\win64;$(MSBuildToolsPath32);$(FxCopDir);$(PATH);</ExecutablePath>
     <IncludePath>$(DXSDK_DIR)Include;$(IncludePath); $(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
     <LibraryPath>$(DXSDK_DIR)Lib\x64;$(LibraryPath); $(VCInstallDir)lib\amd64;$(VCInstallDir)atlmfc\lib\amd64;$(WindowsSdkDir)lib\x64;</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>$(ProjectName)_x64</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -166,7 +171,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS; WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
@@ -184,7 +189,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS; WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)\external\glew\include;$(SolutionDir)\external\sdl_image\include;$(SolutionDir)\external\sprig\include;$(SolutionDir)\external\sdl\include;$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>

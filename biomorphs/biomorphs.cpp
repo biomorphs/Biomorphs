@@ -35,6 +35,14 @@ void Biomorphs::_resetDNA()
 							colourMod);
 
 	m_generation = 0;
+
+	mBiomorphManager.GenerateBiomorph( m_testDNA );
+
+	if( mMorphInstance.IsValid() )
+	{
+		mBiomorphManager.DestroyInstance( mMorphInstance );
+	}
+	mMorphInstance = mBiomorphManager.CreateInstance( m_testDNA );
 }
 
 void Biomorphs::_drawOverlay()
@@ -63,15 +71,16 @@ void Biomorphs::_drawOverlay()
 	sprintf_s(textOut, "DNA: %x%x%x%x", m_testDNA.mFullSequenceHigh0, m_testDNA.mFullSequenceLow0
 										  , m_testDNA.mFullSequenceHigh1, m_testDNA.mFullSequenceLow1);
 	m_device.DrawText( textOut, m_font, dp, textPos );
-
-	textPos.y() = textPos.y() + 18;
-	sprintf_s(textOut, "%d Vertices", m_morphRenderer.GetVertexCount());
-	m_device.DrawText( textOut, m_font, dp, textPos );
 }
 
 void Biomorphs::_drawMorphToScreen()
 {
 	SCOPED_PROFILE(RenderMorphToScreen);
+
+	if( !mMorphInstance.IsValid() )
+	{
+		return;
+	}
 
 	float aspect = (float)m_appConfig.m_windowWidth / (float)m_appConfig.m_windowHeight;
 
@@ -93,8 +102,7 @@ void Biomorphs::_drawMorphToScreen()
 	m_device.ClearTarget( depthBuffer, 1.0f, 0 );
 
 	// draw the biomorph as a sprite
-	Texture2D& morphTexture = m_morphRenderer.CopyOutputTexture(m_spriteRender.GetTexture());
-	m_spriteRender.GetTexture() = morphTexture;
+	m_spriteRender.GetTexture() = *mMorphInstance.GetTexture();
 		 
 	m_spriteRender.RemoveSprites();
 	m_spriteRender.AddSprite( 0, D3DXVECTOR2(-0.7f,-0.7f), D3DXVECTOR2(1.4f,1.4f) );
@@ -106,15 +114,6 @@ void Biomorphs::_render(Timer& timer)
 {
 	{
 		SCOPED_PROFILE(RenderAll);
-
-		// render the current generation to a texture
-		{
-			SCOPED_PROFILE(MorphGeneration);
-
-			m_morphRenderer.StartRendering();
-			m_morphRenderer.DrawBiomorph( m_testDNA );
-			m_morphRenderer.EndRendering( );
-		}
 		
 		// draw the morph on screen
 		_drawMorphToScreen();
@@ -140,19 +139,14 @@ bool Biomorphs::_initialise()
 	m_spriteShader = m_device.CreateEffect(ep);
 
 	// create the morph renderer
-	MorphRender::Parameters p;
-	p.mTextureHeight = 512;
-	p.mTextureWidth = 512;
-	if( !m_morphRenderer.Initialise( &m_device, p ) )
-	{
-		return false;
-	}
+	BiomorphManager::Parameters biop;
+	biop.TextureSize = 512;
+	mBiomorphManager.Initialise( &m_device, biop );
 
 	// Create a sprite renderer
 	SpriteRender::Parameters sp;
 	sp.mMaxSprites = 1024 * 8;
 	sp.shader = m_spriteShader;
-	sp.texture = m_morphRenderer.CopyOutputTexture(sp.texture);
 	m_spriteRender.Create( m_device, sp );
 
 	// Create bloom renderer
@@ -161,6 +155,7 @@ bool Biomorphs::_initialise()
 	bp.mHeight = m_appConfig.m_windowHeight;
 	m_bloom.Create( &m_device, bp );
 
+	// Reset DNA and generate biomorph instance
 	_resetDNA();
 
 	return true;
@@ -169,24 +164,27 @@ bool Biomorphs::_initialise()
 bool Biomorphs::_update(Timer& timer)
 {
 	PROFILER_RESET();
-
-	static float evolutionTime = 0.02f; 
-	static float timeSinceEvolution = evolutionTime;
+	SCOPED_PROFILE(AppUpdate);
 
 	if( m_inputModule->keyPressed( VK_SPACE ) )
 	{
 		_resetDNA();
 	}
-
-	timeSinceEvolution -= timer.getDelta();
-	if( timeSinceEvolution < 0.0f )
+	else
 	{
-		timeSinceEvolution = evolutionTime;
-
 		MutateDNA( m_testDNA );
+		mBiomorphManager.GenerateBiomorph( m_testDNA );
+
+		if( mMorphInstance.IsValid() )
+		{
+			mBiomorphManager.DestroyInstance( mMorphInstance );
+		}
+		mMorphInstance = mBiomorphManager.CreateInstance( m_testDNA );
 
 		m_generation++;
 	}
+
+	mBiomorphManager.CleanupDatabase();
 
 	return true;
 }
@@ -211,7 +209,8 @@ bool Biomorphs::shutdown()
 
 	m_device.Release( m_font );
 
-	m_morphRenderer.Release();
+	mBiomorphManager.DestroyInstance( mMorphInstance );
+	mBiomorphManager.Release();
 
 	m_device.Shutdown();
 	return true;

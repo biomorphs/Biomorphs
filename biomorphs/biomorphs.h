@@ -1,7 +1,7 @@
 #ifndef BIOMORPHS_MODULE_INCLUDED
 #define BIOMORPHS_MODULE_INCLUDED
 
-#include "morph_render.h"
+#include "biomorph_manager.h"
 #include "framework\graphics\d3d_app.h"
 #include "framework\graphics\device.h"
 #include "framework\graphics\screenshot_helper.h"
@@ -33,18 +33,19 @@ private:
 
 	MorphDNA m_testDNA;
 	int m_generation;
-	MorphRender m_morphRenderer;
+
+	BiomorphInstance mMorphInstance;
+	BiomorphManager mBiomorphManager;	
 
 	BloomRender m_bloom;
 
 	Font m_font;
-
 	Effect m_spriteShader;
+	SpriteRender m_spriteRender;
 
 	InputModule* m_inputModule;
 	D3DAppConfig m_appConfig;
 	Device m_device;
-	SpriteRender m_spriteRender;
 };
 
 #endif
