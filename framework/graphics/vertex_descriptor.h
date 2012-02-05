@@ -15,7 +15,7 @@ struct VertexElement
 		VTX_FLOAT4 = DXGI_FORMAT_R32G32B32A32_FLOAT,
 	};
 
-	static inline size_t GetVertexFormatSize(unsigned int f)
+	static inline unsigned int GetVertexFormatSize(unsigned int f)
 	{
 		switch(f)
 		{
@@ -91,11 +91,11 @@ public:
 		m_elements.clear();
 	}
 
-	inline size_t GetVertexSize(int streamIndex)
+	inline unsigned int GetVertexSize(int streamIndex)
 	{
 		// Find the element with the highest offset, take its stride + size
 		ElementIterator largestOffsetVert = m_elements.end();
-		size_t largestOffset = 0;
+		unsigned int largestOffset = 0;
 		for(ElementIterator it = m_elements.begin(); 
 			it != m_elements.end();
 			++it)

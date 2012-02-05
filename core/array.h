@@ -46,12 +46,12 @@ public:
 		return 0;
 	}
 
-	inline const unsigned int size() const
+	inline const size_t size() const
 	{
 		return (m_head-m_buffer);
 	}
 
-	inline const unsigned int maxSize() const
+	inline const size_t maxSize() const
 	{
 		return (m_tail-m_buffer);
 	}
@@ -97,7 +97,7 @@ public:
 		{
 			if( m_grow )
 			{
-				unsigned int newSize = (m_tail - m_buffer) * 2;
+				size_t newSize = (m_tail - m_buffer) * 2;
 				T* newBuf = (T*)malloc(sizeof(T) * newSize);
 				if( newBuf )
 				{

@@ -293,7 +293,7 @@ public:
 		{
 		}
 
-		size_t indexCount;
+		unsigned int indexCount;
 		Format format;
 		CPUAccess access;
 		void* sourceBuffer;	// if this is NULL, the object creates its own buffer
@@ -347,9 +347,9 @@ public:
 			, access(CpuNoAccess)
 		{
 		}
-		size_t vertexSize;
-		size_t vertexCount;
-		size_t stride;
+		unsigned int vertexSize;
+		unsigned int vertexCount;
+		unsigned int stride;
 		CPUAccess access;
 
 		void* sourceBuffer;	// if this is NULL, the object creates its own buffer
@@ -394,7 +394,7 @@ private:
 	ID3D10Buffer* m_buffer;
 	size_t vertexSize;
 	size_t vertexCount;
-	size_t vertexStride;
+	unsigned int vertexStride;
 	void* m_ownedBuffer;
 	CPUAccess m_lockType;
 };

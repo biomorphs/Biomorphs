@@ -49,7 +49,7 @@ void SpriteRender::Draw( Device& device, D3DXVECTOR2 startPosition, D3DXVECTOR2 
 	device.SetVertexBuffer(0, m_spriteVb);
 
 	DrawIndexedParameters dp;
-	dp.m_indexCount = mSprites.size() * 6;
+	dp.m_indexCount = (unsigned int)mSprites.size() * 6;
 	dp.m_pass = 0;
 	dp.m_startIndex = 0;
 	device.DrawIndexed(dp);
@@ -147,9 +147,9 @@ bool SpriteRender::initGraphics(Device& d)
 	m_vd.AddElement(e);
 
 	// allocate the tile vertex buffer memory
-	size_t vertexSize = m_vd.GetVertexSize(0);
-	size_t numVerts = mSprites.maxSize() * 4;
-	size_t vertexBufferSize = vertexSize * numVerts;
+	unsigned int vertexSize = m_vd.GetVertexSize(0);
+	unsigned int numVerts = (unsigned int)mSprites.maxSize() * 4;
+	unsigned int vertexBufferSize = vertexSize * numVerts;
 
 	VertexBuffer::Parameters vbParams;
 	vbParams.sourceBuffer = NULL;
@@ -161,7 +161,7 @@ bool SpriteRender::initGraphics(Device& d)
 
 	IndexBuffer::Parameters ibParams;
 	ibParams.format = IndexBuffer::IB_16BIT;
-	ibParams.indexCount = mSprites.maxSize() * 6;
+	ibParams.indexCount = (unsigned int)mSprites.maxSize() * 6;
 	ibParams.sourceBuffer = NULL;
 	ibParams.access = IndexBuffer::CpuWrite;	// we want to write to the buffer
 	m_spriteIb = d.CreateIB( ibParams );

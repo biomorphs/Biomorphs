@@ -556,7 +556,7 @@ IndexBuffer Device::CreateIB( IndexBuffer::Parameters params )
 {
 	IndexBuffer result;
 
-	size_t indexSize = params.format == IndexBuffer::IB_16BIT ? sizeof(unsigned short) : sizeof(unsigned int);
+	unsigned int indexSize = params.format == IndexBuffer::IB_16BIT ? sizeof(unsigned short) : sizeof(unsigned int);
 
 	D3D10_BUFFER_DESC bd;
 	bd.Usage = D3D10_USAGE_DEFAULT;
@@ -619,7 +619,7 @@ Effect Device::CreateEffect(Effect::Parameters params)
 	{
 		void* errors = compileErrors->GetBufferPointer();
 		char* errorTxt = (char*)errors;
-		int numChars = compileErrors->GetBufferSize();
+		size_t numChars = compileErrors->GetBufferSize();
 		printf_s("A shader failed to compile:\n%s\n", errorTxt);
 	}
 
@@ -659,7 +659,7 @@ ShaderInputLayout Device::CreateVertexInputLayout( Effect& effect, VertexDescrip
 		D3D10_PASS_DESC PassDesc;
 		ID3D10InputLayout* inputLayout=NULL;
 		technique->GetPassByIndex( 0 )->GetDesc( &PassDesc );	// Bind to the first pass
-		HRESULT hr = m_d3dDevice->CreateInputLayout( layout, vd.m_elements.size(), PassDesc.pIAInputSignature,
+		HRESULT hr = m_d3dDevice->CreateInputLayout( layout, (unsigned int)vd.m_elements.size(), PassDesc.pIAInputSignature,
 														PassDesc.IAInputSignatureSize, &inputLayout );
 		if(!FAILED(hr))
 		{

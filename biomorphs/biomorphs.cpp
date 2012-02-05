@@ -1,7 +1,6 @@
 #include "biomorphs.h"
 #include "core\random.h"
 #include "core\profiler.h"
-#include "core\serialisation.h"
 
 #include <ctime>
 
@@ -134,36 +133,8 @@ void Biomorphs::_render(Timer& timer)
 	m_device.PresentBackbuffer();
 }
 
-class TestSerialisation
-{
-public:
-	TestSerialisation()
-	{
-		mIntValue = 42;
-		mUIntValue = -28;
-	}
-
-	DECLARE_SERIALISED(TestSerialisation);
-
-private:
-	int mIntValue;
-	unsigned int mUIntValue;
-};
-
-#define TEST_SERIALISATION_VARS \
-	DECLARE_VALUE( mIntValue ) \
-	DECLARE_VALUE( mUIntValue )
-
-DEFINE_SERIALISATION( TestSerialisation, TEST_SERIALISATION_VARS );
-
 bool Biomorphs::_initialise()
 {
-	{
-		Serialiser serial;
-		TestSerialisation t;
-		t.Serialise( serial, true );
-	}
-
 	// load the sprite shader
 	Effect::Parameters ep("shaders//textured_sprite.fx");
 	m_spriteShader = m_device.CreateEffect(ep);

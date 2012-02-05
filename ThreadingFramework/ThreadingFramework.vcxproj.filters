@@ -111,6 +111,9 @@
     <ClCompile Include="..\core\profiler.cpp">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="..\biomorphs\biomorph_generator.cpp">
+      <Filter>biomorphs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\core\thread.h">
@@ -220,6 +223,15 @@
     </ClInclude>
     <ClInclude Include="..\core\profiler.h">
       <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\serialisation.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\serialiser.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\biomorphs\biomorph_generator.h">
+      <Filter>biomorphs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

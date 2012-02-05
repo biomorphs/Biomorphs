@@ -4,6 +4,7 @@
 #include "core/angles.h"
 #include "core/minmax.h"
 #include "core/random.h"
+#include "core/serialisation.h"
 
 typedef unsigned long long uint_64;
 
@@ -17,6 +18,9 @@ struct MorphDNA
 		, mFullSequence1(0)
 	{
 	}
+
+	DECLARE_SERIALISED( MorphDNA );
+
 	union
 	{
 		struct
@@ -47,6 +51,15 @@ struct MorphDNA
 		};
 	};
 };
+
+// dna serialisation
+#define MORPH_DNA_SERIALISED_VARS \
+	DECLARE_VALUE( mFullSequenceHigh0 ) \
+	DECLARE_VALUE( mFullSequenceLow0 ) \
+	DECLARE_VALUE( mFullSequenceHigh1 ) \
+	DECLARE_VALUE( mFullSequenceLow1 )
+
+DEFINE_SERIALISED_CLASS( MorphDNA, MORPH_DNA_SERIALISED_VARS );
 
 // dna builder helper
 inline MorphDNA MAKEDNA(unsigned int branches, 
