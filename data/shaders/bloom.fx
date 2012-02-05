@@ -72,24 +72,18 @@ PS_INPUT VS( VS_INPUT input )
 float4 PS_COMBINE( PS_INPUT input) : SV_Target
 {
 	float3 full = BlitTexture.Sample( sampleLinear, input.UV );
-	float3 tblr = Tinyblur.Sample( sampleLinear, input.UV );
-	float3 qblr = Quarterblur.Sample( sampleLinear, input.UV );
-	float3 hblr = Halfblur.Sample( sampleLinear, input.UV );
-	float3 etblr = ExtraTinyBlur.Sample( sampleLinear, input.UV );
-
-	// now calculate the luminance from each blur level
-	float exTinyLum = dot( etblr, float3(0.3, 0.59, 0.11) );
-	float tinyLum = dot( tblr, float3(0.3, 0.59, 0.11) );
-	float quarterlum = dot( qblr, float3(0.3, 0.59, 0.11) );
-	float halflum = dot( hblr, float3(0.3, 0.59, 0.11) );
+	float4 tblr = Tinyblur.Sample( sampleLinear, input.UV );
+	float4 qblr = Quarterblur.Sample( sampleLinear, input.UV );
+	float4 hblr = Halfblur.Sample( sampleLinear, input.UV );
+	float4 etblr = ExtraTinyBlur.Sample( sampleLinear, input.UV );
 
 	// threshold + scale using smoothstep
-	float ety = smoothstep( ExtraTinyBloomConsts.x, 1.0f, exTinyLum ) * ExtraTinyBloomConsts.y;
-	float ty = smoothstep( TinyBloomConsts.x, 1.0f, tinyLum ) * TinyBloomConsts.y;
-	float qy = smoothstep( QuarterBloomConsts.x, 1.0f, quarterlum ) * QuarterBloomConsts.y;
-	float hy = smoothstep( HalfBloomConsts.x, 1.0f, halflum ) * HalfBloomConsts.y;
+	float ety = smoothstep( ExtraTinyBloomConsts.x, 1.0f, etblr.a ) * ExtraTinyBloomConsts.y;
+	float ty = smoothstep( TinyBloomConsts.x, 1.0f, tblr.a ) * TinyBloomConsts.y;
+	float qy = smoothstep( QuarterBloomConsts.x, 1.0f, qblr.a ) * QuarterBloomConsts.y;
+	float hy = smoothstep( HalfBloomConsts.x, 1.0f, hblr.a ) * HalfBloomConsts.y;
 
-	return float4( full + (ety * etblr) + (ty * tblr) + (qy * qblr) + (hy * hblr), 1.0f );
+	return float4( full + (ety * etblr.xyz) + (ty * tblr.xyz) + (qy * qblr.xyz) + (hy * hblr.xyz), 1.0f );
 }
 
 technique10 Combine
@@ -116,7 +110,11 @@ float4 PS_DS( PS_INPUT input) : SV_Target
 	float4 s2 = BlitTexture.Sample( sampleLinear, input.UV + float2(-halfPixelSize.x,-halfPixelSize.y) );
 	float4 s3 = BlitTexture.Sample( sampleLinear, input.UV + float2( halfPixelSize.x,-halfPixelSize.y) );
 
-	return ( (s0 + s1 + s2 + s3) / 4.0f );
+	// calculate average luminance
+	float4 combinedColour = (s0 + s1 + s2 + s3) / 4.0f;
+	float combinedLum = dot( combinedColour.xyz, float3(0.3, 0.59, 0.11) );
+
+	return float4(combinedColour.xyz, combinedLum);
 }
 
 technique10 Downsample

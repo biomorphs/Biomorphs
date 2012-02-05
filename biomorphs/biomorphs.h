@@ -22,6 +22,8 @@ public:
 
 private:
 	void _resetDNA();
+	void _drawOverlay();
+	void _drawMorphToScreen();
 
 	bool _update(Timer& timer);
 	void _render(Timer& timer);
@@ -31,7 +33,6 @@ private:
 
 	MorphDNA m_testDNA;
 	int m_generation;
-	bool m_doScreenshots;
 	MorphRender m_morphRenderer;
 
 	BloomRender m_bloom;
@@ -43,7 +44,6 @@ private:
 	InputModule* m_inputModule;
 	D3DAppConfig m_appConfig;
 	Device m_device;
-	ScreenshotHelper m_screenshotHelper;
 	SpriteRender m_spriteRender;
 };
 

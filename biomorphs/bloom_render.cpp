@@ -4,6 +4,8 @@
 
 void BloomRender::CombineTargets( const DrawParameters& p )
 {
+	SCOPED_PROFILE(CombineBloom);
+
 	m_device->ResetShaderState();	// flush currently bound rt
 	m_device->SetRenderTargets( &m_device->GetBackBuffer(), &m_device->GetDepthStencilBuffer() );
 
@@ -124,6 +126,7 @@ void BloomRender::DebugTarget( BloomRT& source )
 
 void BloomRender::Render(const DrawParameters& p)
 {
+	SCOPED_PROFILE(RenderBloom);
 	{
 		SCOPED_PROFILE(BloomCopyBackbuffer);
 		Texture2D backBufferTexture = m_device->GetBackBufferTexture();

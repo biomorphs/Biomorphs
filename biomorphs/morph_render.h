@@ -41,7 +41,7 @@ private:
 
 	inline void CalculateBounds( const D3DXVECTOR2& origin, D3DXVECTOR2& direction, D3DXVECTOR2& min, D3DXVECTOR2& max );
 	inline void GetGeometryVectors( float angle, float length, D3DXVECTOR2& direction, D3DXVECTOR2& perpendicular );
-	inline int WriteVertices( MorphVertex*& vertices, 
+	__forceinline int WriteVertices( MorphVertex*& vertices, 
 								float width,
 								const D3DXVECTOR4& colour,
 								const D3DXVECTOR2& origin,
@@ -49,7 +49,7 @@ private:
 								const D3DXVECTOR2& perpendicular,
 								const D3DXVECTOR2& offset,
 								float drawScale );
-	inline int WriteQuadIndices( unsigned int*& indices, int vertexOffset );
+	__forceinline int WriteQuadIndices( unsigned int*& indices, int vertexOffset );
 
 	// recursion structure (saves passing lots of arguments)
 	// base structure based on the MorphDNA
@@ -112,7 +112,7 @@ inline void MorphRender::_buildRenderParameters( MorphDNA& dna, RecursionParams&
 	p.DrawScale = 1.0f;
 }
 
-inline int MorphRender::WriteQuadIndices( unsigned int*& indices, int vertexOffset )
+__forceinline int MorphRender::WriteQuadIndices( unsigned int*& indices, int vertexOffset )
 {
 	// add some indices for the 2 triangles
 	indices[0] = vertexOffset + 0;	
@@ -128,7 +128,7 @@ inline int MorphRender::WriteQuadIndices( unsigned int*& indices, int vertexOffs
 }
 
 // write verts for a single branch
-inline int MorphRender::WriteVertices( MorphVertex*& vertices, 
+__forceinline int MorphRender::WriteVertices( MorphVertex*& vertices, 
 										float width,
 										const D3DXVECTOR4& colour,
 										const D3DXVECTOR2& origin,
@@ -137,20 +137,20 @@ inline int MorphRender::WriteVertices( MorphVertex*& vertices,
 										const D3DXVECTOR2& offset,
 										float drawScale)
 {
-	const D3DXVECTOR2 perp = perpendicular * width;
+	const D3DXVECTOR2 perp = perpendicular * width * drawScale;
 	const D3DXVECTOR2 o(origin + offset);
-	const D3DXVECTOR2 d = direction;
+	const D3DXVECTOR2 d = direction * drawScale;
 
-	vertices[0].mPosition = o - (perp * drawScale);
+	vertices[0].mPosition = o - perp;
 	vertices[0].mColour = colour;
 
-	vertices[1].mPosition = o + (perp * drawScale);
+	vertices[1].mPosition = o + perp;
 	vertices[1].mColour = colour;
 
-	vertices[2].mPosition = o + (d + perp) * drawScale;
+	vertices[2].mPosition = o + d + perp;
 	vertices[2].mColour = colour;
 
-	vertices[3].mPosition = o + (d - perp) * drawScale;
+	vertices[3].mPosition = o + d - perp;
 	vertices[3].mColour = colour;
 	vertices += 4;
 

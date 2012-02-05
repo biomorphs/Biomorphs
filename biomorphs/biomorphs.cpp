@@ -1,12 +1,12 @@
 #include "biomorphs.h"
 #include "core\random.h"
 #include "core\profiler.h"
+#include "core\serialisation.h"
 
 #include <ctime>
 
 Biomorphs::Biomorphs( void* userData )
 	: m_appConfig(*((D3DAppConfig*)userData))
-	, m_doScreenshots(false)
 {
 }
 
@@ -16,12 +16,7 @@ Biomorphs::~Biomorphs()
 
 void Biomorphs::_resetDNA()
 {
-	// generate a new random seed
-	static int testSeed = 0xffffffff;
-
-	int seed = testSeed == 0xffffffff ? time(NULL) : testSeed;
-	printf("Seed: %x\n", seed );
-	Random::seed( seed );
+	Random::seed( (int)time(NULL) );
 
 	// initialise dna values to a random tree-ish start point
 	D3DXVECTOR3 baseColour( Random::getFloat( 0.5f, 1.0f ),
@@ -43,83 +38,24 @@ void Biomorphs::_resetDNA()
 	m_generation = 0;
 }
 
-void Biomorphs::_render(Timer& timer)
+void Biomorphs::_drawOverlay()
 {
-	{
-		SCOPED_PROFILE(RenderAll);
-
-		float aspect = (float)m_appConfig.m_windowWidth / (float)m_appConfig.m_windowHeight;
-
-		// render the current generation to a texture
-		{
-			SCOPED_PROFILE(MorphGeneration);
-
-			m_morphRenderer.StartRendering();
-			m_morphRenderer.DrawBiomorph( m_testDNA );
-			m_morphRenderer.EndRendering( );
-		}
-
-		{
-			SCOPED_PROFILE(RenderScreen);
-
-			// switch back to rendering to back buffer
-			Rendertarget& backBuffer = m_device.GetBackBuffer();
-			DepthStencilBuffer& depthBuffer = m_device.GetDepthStencilBuffer();
-			m_device.SetRenderTargets( &backBuffer, &depthBuffer );
-
-			// Set the viewport
-			Viewport vp;
-			vp.topLeft = Vector2(0,0);
-			vp.depthRange = Vector2f(0.0f,1.0f);
-			vp.dimensions = Vector2(m_appConfig.m_windowWidth, m_appConfig.m_windowHeight);
-			m_device.SetViewport( vp );
-
-			// Clear buffers
-			static float clearColour[4] = {0.05f, 0.15f, 0.25f, 1.0f};
-			m_device.ClearTarget( backBuffer, clearColour );
-			m_device.ClearTarget( depthBuffer, 1.0f, 0 );
-
-			// draw the biomorph as a sprite
-			Texture2D& morphTexture = m_morphRenderer.CopyOutputTexture(m_spriteRender.GetTexture());
-			m_spriteRender.GetTexture() = morphTexture;
-		 
-			m_spriteRender.RemoveSprites();
-			m_spriteRender.AddSprite( 0, D3DXVECTOR2(-0.7f,-0.7f), D3DXVECTOR2(1.4f,1.4f) );
-			float scale = 0.6f;
-			m_spriteRender.Draw( m_device, D3DXVECTOR2(0.0f,0.0f), D3DXVECTOR2(scale,scale*aspect), "Render" );
-		}
-
-		{
-			SCOPED_PROFILE(RenderBloom);
-		
-			//now render the bloom from the backbuffer
-			static BloomRender::DrawParameters dp( 0.15f, 1.0f,
-												   0.2f, 1.0f,
-												   0.8f, 1.0f,
-												   0.6f, 1.0f );
-			m_bloom.Render(dp);
-		}
-	}
-
 	char textOut[256] = {'\0'};
 	Font::DrawParameters dp;
 	const float textColour[] = {1.0f,1.0f,1.0f,1.0f};
-	Vector2 textPos( 16, m_appConfig.m_windowHeight - 350 );
+	Vector2 textPos( 16, m_appConfig.m_windowHeight - 370 );
 	memcpy( dp.mColour, textColour, sizeof(textColour) );
 
 	// render profiler data
 	dp.mJustification = Font::DRAW_LEFT;
 	PROFILER_ITERATE_DATA(ItName)
 	{
-		char* t = textOut;
-		for(int i=0;i<(*ItName).mStackLevel;++i)
-		{
-			*t++ = ' ';	*t++ = ' ';
-		}
-		_snprintf(t, textOut + sizeof(textOut) - t, "%s: %3.3fms\n", (*ItName).mName.c_str(), (*ItName).mTimeDiff * 1000.0f);
+		textPos.x() = 16 + ((*ItName).mStackLevel * 16);
+		sprintf_s(textOut, "%s: %3.3fms\n", (*ItName).mName.c_str(), (*ItName).mTimeDiff * 1000.0f);
 		m_device.DrawText( textOut, m_font, dp, textPos );	textPos.y() = textPos.y() + 18;
 	}
 
+	textPos.x() = 16;
 	textPos.y() = textPos.y() + 30;
 	sprintf_s(textOut, "Generation: %d", m_generation);
 	m_device.DrawText( textOut, m_font, dp, textPos );
@@ -132,31 +68,102 @@ void Biomorphs::_render(Timer& timer)
 	textPos.y() = textPos.y() + 18;
 	sprintf_s(textOut, "%d Vertices", m_morphRenderer.GetVertexCount());
 	m_device.DrawText( textOut, m_font, dp, textPos );
+}
+
+void Biomorphs::_drawMorphToScreen()
+{
+	SCOPED_PROFILE(RenderMorphToScreen);
+
+	float aspect = (float)m_appConfig.m_windowWidth / (float)m_appConfig.m_windowHeight;
+
+	// switch back to rendering to back buffer
+	Rendertarget& backBuffer = m_device.GetBackBuffer();
+	DepthStencilBuffer& depthBuffer = m_device.GetDepthStencilBuffer();
+	m_device.SetRenderTargets( &backBuffer, &depthBuffer );
+
+	// Set the viewport
+	Viewport vp;
+	vp.topLeft = Vector2(0,0);
+	vp.depthRange = Vector2f(0.0f,1.0f);
+	vp.dimensions = Vector2(m_appConfig.m_windowWidth, m_appConfig.m_windowHeight);
+	m_device.SetViewport( vp );
+
+	// Clear buffers
+	static float clearColour[4] = {0.05f, 0.15f, 0.25f, 1.0f};
+	m_device.ClearTarget( backBuffer, clearColour );
+	m_device.ClearTarget( depthBuffer, 1.0f, 0 );
+
+	// draw the biomorph as a sprite
+	Texture2D& morphTexture = m_morphRenderer.CopyOutputTexture(m_spriteRender.GetTexture());
+	m_spriteRender.GetTexture() = morphTexture;
+		 
+	m_spriteRender.RemoveSprites();
+	m_spriteRender.AddSprite( 0, D3DXVECTOR2(-0.7f,-0.7f), D3DXVECTOR2(1.4f,1.4f) );
+	float scale = 0.6f;
+	m_spriteRender.Draw( m_device, D3DXVECTOR2(0.0f,0.0f), D3DXVECTOR2(scale,scale*aspect), "Render" );
+}
+
+void Biomorphs::_render(Timer& timer)
+{
+	{
+		SCOPED_PROFILE(RenderAll);
+
+		// render the current generation to a texture
+		{
+			SCOPED_PROFILE(MorphGeneration);
+
+			m_morphRenderer.StartRendering();
+			m_morphRenderer.DrawBiomorph( m_testDNA );
+			m_morphRenderer.EndRendering( );
+		}
+		
+		// draw the morph on screen
+		_drawMorphToScreen();
+	
+		//now render the bloom from the backbuffer
+		static BloomRender::DrawParameters dp( 0.15f, 1.0f,
+												0.2f, 1.0f,
+												0.8f, 1.0f,
+												0.4f, 1.0f );
+		m_bloom.Render(dp);
+	}
+
+	// display overlay
+	_drawOverlay();
 
 	m_device.PresentBackbuffer();
-
-	// build a file name from the index + DNA identifier
-	if( m_doScreenshots )
-	{
-		char dnaFilename[512] = {'\0'};
-		if( m_generation < 10 )
-		{
-			sprintf_s( dnaFilename, "screenshots//00%u", m_generation);
-		}
-		else if( m_generation < 100 )
-		{
-				sprintf_s( dnaFilename, "screenshots//0%u", m_generation);
-		}
-		else
-		{
-			sprintf_s( dnaFilename, "screenshots//%u", m_generation);
-		}
-		m_screenshotHelper.TakeScreenshot(dnaFilename);
-	}
 }
+
+class TestSerialisation
+{
+public:
+	TestSerialisation()
+	{
+		mIntValue = 42;
+		mUIntValue = -28;
+	}
+
+	DECLARE_SERIALISED(TestSerialisation);
+
+private:
+	int mIntValue;
+	unsigned int mUIntValue;
+};
+
+#define TEST_SERIALISATION_VARS \
+	DECLARE_VALUE( mIntValue ) \
+	DECLARE_VALUE( mUIntValue )
+
+DEFINE_SERIALISATION( TestSerialisation, TEST_SERIALISATION_VARS );
 
 bool Biomorphs::_initialise()
 {
+	{
+		Serialiser serial;
+		TestSerialisation t;
+		t.Serialise( serial, true );
+	}
+
 	// load the sprite shader
 	Effect::Parameters ep("shaders//textured_sprite.fx");
 	m_spriteShader = m_device.CreateEffect(ep);
@@ -177,8 +184,7 @@ bool Biomorphs::_initialise()
 	sp.texture = m_morphRenderer.CopyOutputTexture(sp.texture);
 	m_spriteRender.Create( m_device, sp );
 
-	m_screenshotHelper.Initialise( &m_device );
-
+	// Create bloom renderer
 	BloomRender::Parameters bp;
 	bp.mWidth = m_appConfig.m_windowWidth;
 	bp.mHeight = m_appConfig.m_windowHeight;
@@ -234,7 +240,6 @@ bool Biomorphs::shutdown()
 
 	m_device.Release( m_font );
 
-	m_screenshotHelper.Release();
 	m_morphRenderer.Release();
 
 	m_device.Shutdown();
@@ -266,7 +271,11 @@ bool Biomorphs::initDevice()
 {
 	// Init the device
 	Device::InitParameters params;
+#ifdef _DEBUG
 	params.enableDebugD3d = true;
+#else
+	params.enableDebugD3d = false;
+#endif
 	params.msaaCount = 1;
 	params.msaaQuality = 0;
 	params.windowHeight = m_appConfig.m_windowHeight;
