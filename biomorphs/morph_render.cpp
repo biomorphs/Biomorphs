@@ -85,17 +85,24 @@ int MorphRender::_drawRecursive( MorphDNA& dna, RecursionParams& params, MorphVe
 
 	int ch0Indices = _drawRecursive( dna, childParams, vertices, indices );
 	childParams.vertexOffset += ((ch0Indices / 6) * 4);
-	params.BoundsMin.x = Bounds::Min(params.BoundsMin.x, childParams.BoundsMin.x);
-	params.BoundsMin.y = Bounds::Min(params.BoundsMin.y, childParams.BoundsMin.y);
-	params.BoundsMax.x = Bounds::Max(params.BoundsMax.x, childParams.BoundsMax.x);
-	params.BoundsMax.y = Bounds::Max(params.BoundsMax.y, childParams.BoundsMax.y);
+	if( !params.Draw )
+	{
+		params.BoundsMin.x = Bounds::Min(params.BoundsMin.x, childParams.BoundsMin.x);
+		params.BoundsMin.y = Bounds::Min(params.BoundsMin.y, childParams.BoundsMin.y);
+		params.BoundsMax.x = Bounds::Max(params.BoundsMax.x, childParams.BoundsMax.x);
+		params.BoundsMax.y = Bounds::Max(params.BoundsMax.y, childParams.BoundsMax.y);
+	}
 
 	childParams.Angle = params.Angle - branchAngle;
 	int ch1Indices = _drawRecursive( dna, childParams, vertices, indices );
-	params.BoundsMin.x = Bounds::Min(params.BoundsMin.x, childParams.BoundsMin.x);
-	params.BoundsMin.y = Bounds::Min(params.BoundsMin.y, childParams.BoundsMin.y);
-	params.BoundsMax.x = Bounds::Max(params.BoundsMax.x, childParams.BoundsMax.x);
-	params.BoundsMax.y = Bounds::Max(params.BoundsMax.y, childParams.BoundsMax.y);
+	
+	if( !params.Draw )
+	{
+		params.BoundsMin.x = Bounds::Min(params.BoundsMin.x, childParams.BoundsMin.x);
+		params.BoundsMin.y = Bounds::Min(params.BoundsMin.y, childParams.BoundsMin.y);
+		params.BoundsMax.x = Bounds::Max(params.BoundsMax.x, childParams.BoundsMax.x);
+		params.BoundsMax.y = Bounds::Max(params.BoundsMax.y, childParams.BoundsMax.y);
+	}
 
 	iCount += ch0Indices + ch1Indices;
 
